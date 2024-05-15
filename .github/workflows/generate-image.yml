@@ -1,0 +1,36 @@
+name: Generate image
+
+# TODO: add cron trigger
+on:
+  push:
+    branches: [trunk]
+    paths-ignore: ['README.md']
+
+jobs:
+  generate-packer-image:
+    name: 'Generate Packer image'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Clone runner images repository
+      uses: actions/checkout@v4
+      with:
+        repository: 'actions/runner-images'
+
+    - name: Setup Packer
+      uses: hashicorp/setup-packer@v3
+
+    - name: Build image and publish to Azure
+      run: |
+        packer init "$IMAGE_TEMPLATE"
+        packer build \
+          -var "managed_image_name=$IMAGE_NAME" \
+          -var "managed_image_resource_group_name=$ARM_RESOURCE_GROUP" \
+          -var "build_resource_group_name=$ARM_RESOURCE_GROUP" \
+          "$IMAGE_TEMPLATE"
+      env:
+        ARM_SUBSCRIPTION_ID: ${{ vars.ARM_SUBSCRIPTION_ID }}
+        ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID }}
+        ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+        ARM_RESOURCE_GROUP: ${{ vars.ARM_RESOURCE_GROUP }}
+        IMAGE_NAME: 'github-runner-ubuntu-22.04'
+        IMAGE_TEMPLATE: './images/ubuntu/templates/ubuntu-22.04.pkr.hcl'
