@@ -1,6 +1,6 @@
 # core-github-actions-runner
 
-Configuration for generating the GitHub Actions runner OS image used by Elvias GitHub runners.
+Configuration for generating the OS images used by Elvias GitHub Actions runners.
 
 The image is generated in the GitHub workflow [generate-image.yml](.github/workflows/generate-image.yml) using Packer.
 Packer will also push the image to Azure.
