@@ -4,7 +4,7 @@ name: Generate image
 on:
   push:
     branches: [trunk]
-    paths-ignore: ['README.md']
+    paths-ignore: ['README.md', '**/renovate.json']
 
 jobs:
   generate-packer-image:
