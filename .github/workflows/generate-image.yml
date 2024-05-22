@@ -24,7 +24,6 @@ jobs:
         packer init "$IMAGE_TEMPLATE"
         packer build \
           -var "managed_image_name=$IMAGE_NAME" \
-          -var "managed_image_resource_group_name=$ARM_RESOURCE_GROUP" \
           -var "temp_resource_group_name=packer-build-delete-me-$RANDOM$RANDOM" \
           "$IMAGE_TEMPLATE"
       env:
@@ -32,5 +31,6 @@ jobs:
         ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID }}
         ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
         ARM_RESOURCE_GROUP: ${{ vars.ARM_RESOURCE_GROUP }}
+        ARM_RESOURCE_LOCATION: 'westeurope'
         IMAGE_NAME: 'github-runner-ubuntu-22.04'
         IMAGE_TEMPLATE: './images/ubuntu/templates/ubuntu-22.04.pkr.hcl'
