@@ -3,13 +3,14 @@ name: Generate image
 # TODO: add cron trigger
 on:
   push:
-    branches: [trunk]
+    branches: [develop]
     paths-ignore: ['README.md', '.github/renovate.json']
 
 jobs:
   generate-packer-image:
     name: 'Generate Packer image'
     runs-on: elvia-runner
+    environment: ${{ github.head_ref == 'master' || github.ref_name == 'master' && 'prod' || 'dev' }}
     steps:
     - name: Clone runner images repository
       uses: actions/checkout@v4
@@ -32,6 +33,6 @@ jobs:
         ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID }}
         ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
         ARM_RESOURCE_GROUP: ${{ vars.ARM_RESOURCE_GROUP }}
-        ARM_RESOURCE_LOCATION: 'westeurope'
-        IMAGE_NAME: 'github-runner-ubuntu-22.04'
+        ARM_RESOURCE_LOCATION: ${{ vars.ARM_RESOURCE_LOCATION }}
         IMAGE_TEMPLATE: './images/ubuntu/templates/ubuntu-22.04.pkr.hcl'
+        IMAGE_NAME: 'github-runner-ubuntu-22.04'
