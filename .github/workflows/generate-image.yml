@@ -3,7 +3,7 @@ name: Generate image
 # TODO: add cron trigger
 on:
   push:
-    branches: [develop]
+    branches: [master, develop]
     paths-ignore: ['README.md', '.github/renovate.json']
 
 jobs:
