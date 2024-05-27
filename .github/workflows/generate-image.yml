@@ -9,7 +9,7 @@ on:
 jobs:
   generate-packer-image:
     name: 'Generate Packer image'
-    runs-on: elvia-runner
+    runs-on: elvia-runner-dev # TODO: use prod
     environment: ${{ github.head_ref == 'master' || github.ref_name == 'master' && 'prod' || 'dev' }}
     steps:
     - name: Clone runner images repository
