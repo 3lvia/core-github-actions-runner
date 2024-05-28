@@ -11,6 +11,8 @@ jobs:
     name: 'Generate Packer image'
     runs-on: elvia-runner-dev # TODO: use prod
     environment: ${{ github.head_ref == 'master' || github.ref_name == 'master' && 'prod' || 'dev' }}
+    outputs:
+      image_name: ${{ steps.set-env.outputs.image_name }}
     steps:
     - name: Clone runner images repository
       uses: actions/checkout@v4
@@ -20,11 +22,12 @@ jobs:
     - name: Setup Packer
       uses: hashicorp/setup-packer@v3
 
-    - name: Set environment variables
+    - name: Set environment variables and output
+      id: set-env
       run: |
-        # echo "IMAGE_NAME=github-runner-$(date +%s)" >> "$GITHUB_ENV" # TODO: uncomment
-        echo "IMAGE_NAME=github-runner-1716885394" >> "$GITHUB_ENV" # TODO: remove
+        # echo "image_name=github-runner-$(date +%s)" >> "$GITHUB_OUTPUT" # TODO: uncomment
         echo "TEMP_RESOURCE_GROUP_NAME=packer-build-delete-me-$RANDOM$RANDOM" >> "$GITHUB_ENV"
+        echo "image_name=github-runner-1716885394" >> "$GITHUB_OUTPUT" # TODO: remove
 
     - name: Build image and publish to Azure
       if: false # TODO: remove
@@ -42,6 +45,12 @@ jobs:
         ARM_RESOURCE_LOCATION: ${{ vars.ARM_RESOURCE_LOCATION }}
         IMAGE_TEMPLATE: './images/ubuntu/templates/ubuntu-22.04.pkr.hcl'
 
+  update-vmss:
+    name: 'Update VMSS with new image'
+    runs-on: ubuntu-latest # DON'T USE ELVIA RUNNER! THIS WILL CANCEL THE JOB
+    environment: ${{ github.head_ref == 'master' || github.ref_name == 'master' && 'prod' || 'dev' }}
+    needs: [generate-packer-image]
+    steps:
     - name: Login to Azure CLI
       uses: azure/login@v2
       with:
@@ -49,7 +58,7 @@ jobs:
 
     - name: Update VMSS with new image
       run: |
-        image_id=$(az image show -g '${{ vars.ARM_RESOURCE_GROUP }}' -n '${{ env.IMAGE_NAME }}' --query id -o tsv)
+        image_id=$(az image show -g '${{ vars.ARM_RESOURCE_GROUP }}' -n '${{ needs.generate-packer-image.outputs.image_name }}' --query id -o tsv)
         az vmss update \
           --resource-group '${{ vars.ARM_RESOURCE_GROUP }}' \
           --name '${{ vars.VMSS_NAME }}' \
