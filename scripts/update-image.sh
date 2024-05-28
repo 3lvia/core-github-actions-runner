@@ -59,7 +59,7 @@ remove_software() {
 
     for software in "${remove_software_list[@]}"; do
         printf "    Removing install script for '%s'...\n" "$software"
-        rm -f "images/ubuntu/scripts/build/install-$software.sh"
+        rm -f "actions-runner/images/ubuntu/scripts/build/install-$software.sh"
 
         printf "    Removing line from Packer configuration for '%s'...\n\n" "$software"
         sed -i "/install-$software.sh/d" "$template_file"
@@ -73,9 +73,33 @@ remove_software() {
 # TODO: Implement this function
 add_software() {
     local template_file="$1"
+    local add_software_list=(
+        'trivy'
+    )
 
-    echo "Adding software..."
-    echo 'NOT IMPLEMENTED'
+    printf "Adding software...\n\n"
+
+    for software in "${add_software_list[@]}"; do
+        local install_script="actions-runner/images/ubuntu/scripts/build/install-$software.sh"
+        if [[ -f "$install_script" ]]; then
+            printf "    Install script for '%s' already exists.\n" "$software"
+            continue
+        fi
+
+        printf "    Adding install script for '%s'...\n" "$software"
+        cp "scripts/install-$software.sh" "$install_script"
+
+        if ! grep -q "install-$software.sh" "$template_file"; then
+            printf "    Line for '%s' already exists in Packer configuration.\n\n" "$software"
+            continue
+        fi
+
+        printf "    Adding line to Packer configuration for '%s'...\n\n" "$software"
+        sed -i \
+            's/"${path.root}/../scripts/build/install-zstd.sh/"${path.root}/../scripts/build/install-zstd.sh,\n"${path.root}/../scripts/build/install-'"$software"'.sh,/' \
+            "$template_file"
+    done
+
     printf "Done.\n\n"
 
     validate_packer "$template_file"
@@ -104,7 +128,7 @@ update() {
     git_dir="$(mktemp -d)"
 
     local working_dir
-    working_dir="$(pwd)"
+    working_dir="$(pwd)/runner-images"
 
     local template_file="$1"
 
@@ -127,7 +151,7 @@ update() {
 }
 
 main() {
-    local template_file='images/ubuntu/templates/ubuntu-22.04.pkr.hcl'
+    local template_file='actions-runner/images/ubuntu/templates/ubuntu-22.04.pkr.hcl'
 
     if [[ "${1-}" == "--apply" ]]; then
         apply_customizations "$template_file"
