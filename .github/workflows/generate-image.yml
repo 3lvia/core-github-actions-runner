@@ -22,10 +22,12 @@ jobs:
 
     - name: Set environment variables
       run: |
-        echo "IMAGE_NAME=github-runner-$(date +%s)" >> "$GITHUB_ENV"
+        # echo "IMAGE_NAME=github-runner-$(date +%s)" >> "$GITHUB_ENV" # TODO: uncomment
+        echo "IMAGE_NAME=github-runner-1716885394" >> "$GITHUB_ENV" # TODO: remove
         echo "TEMP_RESOURCE_GROUP_NAME=packer-build-delete-me-$RANDOM$RANDOM" >> "$GITHUB_ENV"
 
     - name: Build image and publish to Azure
+      if: false # TODO: remove
       run: |
         packer init "$IMAGE_TEMPLATE"
         packer build \
@@ -39,6 +41,11 @@ jobs:
         ARM_RESOURCE_GROUP: ${{ vars.ARM_RESOURCE_GROUP }}
         ARM_RESOURCE_LOCATION: ${{ vars.ARM_RESOURCE_LOCATION }}
         IMAGE_TEMPLATE: './images/ubuntu/templates/ubuntu-22.04.pkr.hcl'
+
+    - name: Login to Azure CLI
+      uses: azure/login@v2
+      with:
+        creds: '{"clientId":"${{ secrets.ARM_CLIENT_ID }}","clientSecret":"${{ secrets.ARM_CLIENT_SECRET }}","subscriptionId":"${{ secrets.ARM_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.ARM_TENANT_ID }}"}'
 
     - name: Update VMSS with new image
       run: |
