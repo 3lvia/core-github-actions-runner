@@ -20,13 +20,17 @@ jobs:
     - name: Setup Packer
       uses: hashicorp/setup-packer@v3
 
+    - name: Set environment variables
+      run: |
+        echo "IMAGE_NAME=github-runner-$(date +%s)" >> "$GITHUB_ENV"
+        echo "TEMP_RESOURCE_GROUP_NAME=packer-build-delete-me-$RANDOM$RANDOM" >> "$GITHUB_ENV"
+
     - name: Build image and publish to Azure
       run: |
         packer init "$IMAGE_TEMPLATE"
         packer build \
-          -var "managed_image_name=$IMAGE_NAME" \
-          -var "temp_resource_group_name=packer-build-delete-me-$RANDOM$RANDOM" \
-          -force \
+          -var 'managed_image_name=${{ env.IMAGE_NAME}}' \
+          -var 'temp_resource_group_name=${{ env.TEMP_RESOURCE_GROUP_NAME }}' \
           "$IMAGE_TEMPLATE"
       env:
         ARM_SUBSCRIPTION_ID: ${{ vars.ARM_SUBSCRIPTION_ID }}
@@ -35,4 +39,11 @@ jobs:
         ARM_RESOURCE_GROUP: ${{ vars.ARM_RESOURCE_GROUP }}
         ARM_RESOURCE_LOCATION: ${{ vars.ARM_RESOURCE_LOCATION }}
         IMAGE_TEMPLATE: './images/ubuntu/templates/ubuntu-22.04.pkr.hcl'
-        IMAGE_NAME: 'github-runner-ubuntu-22.04'
+
+    - name: Update VMSS with new image
+      run: |
+        image_id=$(az image show -g '${{ vars.ARM_RESOURCE_GROUP }}' -n '${{ env.IMAGE_NAME }}' --query id -o tsv)
+        az vmss update \
+          --resource-group '${{ vars.ARM_RESOURCE_GROUP }}' \
+          --name '${{ vars.VMSS_NAME }}' \
+          --set virtualMachineProfile.storageProfile.imageReference.id="$image_id"
