@@ -2,69 +2,126 @@
 
 set -eou pipefail
 
-main() {
-    local tmp_dir
-    tmp_dir="$(mktemp -d)"
+check_diff() {
+    local files_path="$1"
+    local git_dir="$2"
+    local working_dir="$3"
+
+    local files
+
+    cd "$git_dir"
+    files=$(git ls-files "$files_path")
+    cd "$working_dir"
+
+    for file in "${files[@]}"; do
+        local file_diff
+        file_diff=$(diff -u --color "$working_dir/$file" "$git_dir/$file" || true)
+        if [[ "$file_diff" != "" ]]; then
+            printf "\n\n\nChanges in '%s':\n\n\n" "$file"
+            echo "$file_diff"
+            printf "\n\n\n"
+            read -p "Do you want to apply these changes to $file? [y/N] " -n 1 -r
+            printf "\n\n\n"
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                cp "$git_dir/$file" "$working_dir/$file"
+            fi
+        else
+            printf "No changes in '%s'.\n" "$file"
+        fi
+    done
+}
+
+remove_software() {
+    local packer_file="$1"
+    local remove_software_list=(
+        'apache'
+        'aws-tools'
+        'gfortran'
+        'java-tools'
+        'php'
+        'postgresql'
+        'pulumi'
+        'bazel'
+        'rust'
+        'julia'
+        'selenium'
+        'vcpkg'
+        'android-sdk'
+    )
+
+    for software in "${remove_software_list[@]}"; do
+        printf "Removing install script for '%s'...\n" "$software"
+        rm -rf "images/ubuntu/scripts/install-$software.sh"
+        printf "Done.\n\n"
+
+        printf "Removing line from Packer configuration for '%s'...\n" "$software"
+        sed -i "/install-$software.sh/d" "$packer_file"
+    done
+}
+
+validate_packer() {
+    local template_file="$1"
+
+    echo 'Validating Packer configuration...'
+    packer validate \
+        -var managed_image_resource_group_name='test' \
+        -var location='westeurope' \
+        "$template_file"
+    printf "Done.\n\n"
+}
+
+
+apply_customizations() {
+    local template_file="$1"
+
+    echo 'Removing software...'
+    remove_software "$template_file"
+    printf "Done.\n\n"
+
+    echo 'Validating Packer configuration...'
+    validate_packer "$template_file"
+    printf "Done.\n\n"
+
+    echo 'Adding software...'
+    echo 'NOT IMPLEMENTED'
+    printf "Done.\n\n"
+}
+
+update() {
+    local git_dir
+    git_dir="$(mktemp -d)"
 
     local working_dir
     working_dir="$(pwd)"
 
-    git clone git@github.com:actions/runner-images.git "$tmp_dir"
+    local template_file="$1"
 
-    mkdir -p images
-    mkdir -p helpers
+    echo 'Cloning runner-images repository...'
+    git clone git@github.com:actions/runner-images.git "$git_dir" -q
+    cd "$git_dir"
+    printf "Done.\n\n"
 
-    cd "$tmp_dir"
-    local files_images_ubuntu
-    files_images_ubuntu=$(git ls-files 'images/ubuntu')
+    apply_customizations "$template_file"
 
-    local files_helpers
-    files_helpers=$(git ls-files 'helpers')
+    local dirs='images/ubuntu helpers'
     cd "$working_dir"
 
-    local files_images_ubuntu_diff=()
-    for file in $files_images_ubuntu; do
-        local file_diff
-        file_diff=$(diff --color "$tmp_dir/$file" "$working_dir/$file")
-        printf "%s\n" "$file_diff"
-        files_images_ubuntu_diff+=("$file_diff")
+    for dir_ in $dirs; do
+        mkdir -p "$dir_"
+        check_diff "$dir_" "$git_dir" "$working_dir"
     done
 
-    if [[ ${#files_images_ubuntu_diff[@]} -gt 0 ]]; then
-        read -p "Do you want to update the images/ubuntu files? [y/N] " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            for file in $files_images_ubuntu; do
-                printf "Copying %s\n" "$file"
-                cp "$tmp_dir/$file" "$working_dir/$file"
-            done
-        fi
-    else
-        echo "No changes in images/ubuntu files"
-    fi
-
-    local files_helpers_diff=()
-    for file in $files_helpers; do
-        local file_diff
-        file_diff=$(diff --color "$tmp_dir/$file" "$working_dir/$file")
-        printf "%s\n" "$file_diff"
-        files_helpers_diff+=("$file_diff")
-    done
-
-    if [[ ${#files_helpers_diff[@]} -gt 0 ]]; then
-        read -p "Do you want to update the helpers files? [y/N] " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            for file in $files_helpers; do
-                printf "Copying %s\n" "$file"
-                cp "$tmp_dir/$file" "$working_dir/$file"
-            done
-        fi
-    else
-        echo "No changes in helpers files"
-    fi
-
-    rm -rf "$tmp_dir"
+    rm -rf "$git_dir"
 }
 
-main
+main() {
+    local template_file='images/ubuntu/templates/ubuntu-22.04.pkr.hcl'
+
+    if [[ "$1" == "--apply" ]]; then
+        apply_customizations "$template_file"
+    else
+        update "$template_file"
+    fi
+}
+
+main "$@"
