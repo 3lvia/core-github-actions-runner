@@ -9,7 +9,7 @@ on:
 jobs:
   generate-packer-image:
     name: 'Generate Packer image'
-    runs-on: elvia-runner-dev # TODO: use prod
+    runs-on: ${{ github.head_ref == 'master' || github.ref_name == 'master' && 'elvia-runner' || 'elvia-runner-dev' }}
     environment: ${{ github.head_ref == 'master' || github.ref_name == 'master' && 'prod' || 'dev' }}
     outputs:
       image_name: ${{ steps.set-env.outputs.image_name }}
@@ -25,12 +25,10 @@ jobs:
     - name: Set environment variables and output
       id: set-env
       run: |
-        # echo "image_name=github-runner-$(date +%s)" >> "$GITHUB_OUTPUT" # TODO: uncomment
+        echo "image_name=github-runner-$(date +%s)" >> "$GITHUB_OUTPUT"
         echo "TEMP_RESOURCE_GROUP_NAME=packer-build-delete-me-$RANDOM$RANDOM" >> "$GITHUB_ENV"
-        echo "image_name=github-runner-1716885394" >> "$GITHUB_OUTPUT" # TODO: remove
 
     - name: Build image and publish to Azure
-      if: false # TODO: remove
       run: |
         packer init "$IMAGE_TEMPLATE"
         packer build \
