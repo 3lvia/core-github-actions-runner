@@ -47,6 +47,7 @@ remove_software() {
         'selenium'
         'vcpkg'
         'android-sdk'
+        'leiningen'
     )
 
     printf "Removing software...\n\n"
