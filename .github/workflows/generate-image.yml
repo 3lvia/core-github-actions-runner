@@ -60,6 +60,7 @@ jobs:
       run: |
         image_id=$(az image show -g '${{ vars.ARM_RESOURCE_GROUP }}' -n '${{ needs.generate-packer-image.outputs.image_name }}' --query id -o tsv)
         az vmss update \
+          --output none \
           --resource-group '${{ vars.ARM_RESOURCE_GROUP }}' \
           --name '${{ vars.VMSS_NAME }}' \
           --set virtualMachineProfile.storageProfile.imageReference.id="$image_id"
