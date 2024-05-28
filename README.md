@@ -8,6 +8,31 @@ Packer will also publish the image to Azure.
 The Terraform code for the VM scale sets running the image is in the [core-terraform](https://github.com/3lvia/core-terraform) repository.
 The credentials for authenticating to Azure are stored in the GitHub repository variables/secrets and are also configured in the core-terraform repository.
 
+## Updating the image
+
+### Syncing with upstream
+
+The configuraiton for the image is based on the [GitHub Actions Runner](https://github.com/actions/runner-images) repository.
+We have copied the configuration for the Ubuntu 22.04 image, and made some modifications.
+These modifications are mainly removeing/adding software.
+
+To update the image with the latest changes from the upstream repository, run the following command:
+
+```bash
+./scripts/update-image.sh
+```
+
+You will be prompted to accept any changes to files that have been modified.
+
+### Remove software
+
+To remove software from the image, edit the `remove_software_list` variable in the [scripts/update-image.sh](scripts/update-image.sh) script.
+This is done mainly to shorten the build time.
+
+### Add software
+
+TODO: not implemented yet.
+
 ## Development
 
 We use two branches `master` and `develop` and their corresponding environments `prod` and `dev`.

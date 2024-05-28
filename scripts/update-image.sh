@@ -13,7 +13,7 @@ check_diff() {
     files=$(git ls-files "$files_path")
     cd "$working_dir"
 
-    for file in "${files[@]}"; do
+    for file in $files; do
         local file_diff
         file_diff=$(diff -u --color "$working_dir/$file" "$git_dir/$file" || true)
         if [[ "$file_diff" != "" ]]; then
@@ -32,7 +32,7 @@ check_diff() {
 }
 
 remove_software() {
-    local packer_file="$1"
+    local template_file="$1"
     local remove_software_list=(
         'apache'
         'aws-tools'
@@ -49,14 +49,30 @@ remove_software() {
         'android-sdk'
     )
 
-    for software in "${remove_software_list[@]}"; do
-        printf "Removing install script for '%s'...\n" "$software"
-        rm -rf "images/ubuntu/scripts/install-$software.sh"
-        printf "Done.\n\n"
+    printf "Removing software...\n\n"
 
-        printf "Removing line from Packer configuration for '%s'...\n" "$software"
-        sed -i "/install-$software.sh/d" "$packer_file"
+    for software in "${remove_software_list[@]}"; do
+        printf "    Removing install script for '%s'...\n" "$software"
+        rm -f "images/ubuntu/scripts/build/install-$software.sh"
+
+        printf "    Removing line from Packer configuration for '%s'...\n\n" "$software"
+        sed -i "/install-$software.sh/d" "$template_file"
     done
+
+    printf "Done.\n\n"
+
+    validate_packer "$template_file"
+}
+
+# TODO: Implement this function
+add_software() {
+    local template_file="$1"
+
+    echo "Adding software..."
+    echo 'NOT IMPLEMENTED'
+    printf "Done.\n\n"
+
+    validate_packer "$template_file"
 }
 
 validate_packer() {
@@ -67,24 +83,14 @@ validate_packer() {
         -var managed_image_resource_group_name='test' \
         -var location='westeurope' \
         "$template_file"
-    printf "Done.\n\n"
+    echo
 }
-
 
 apply_customizations() {
     local template_file="$1"
 
-    echo 'Removing software...'
     remove_software "$template_file"
-    printf "Done.\n\n"
-
-    echo 'Validating Packer configuration...'
-    validate_packer "$template_file"
-    printf "Done.\n\n"
-
-    echo 'Adding software...'
-    echo 'NOT IMPLEMENTED'
-    printf "Done.\n\n"
+    add_software "$template_file"
 }
 
 update() {
@@ -117,7 +123,7 @@ update() {
 main() {
     local template_file='images/ubuntu/templates/ubuntu-22.04.pkr.hcl'
 
-    if [[ "$1" == "--apply" ]]; then
+    if [[ "${1-}" == "--apply" ]]; then
         apply_customizations "$template_file"
     else
         update "$template_file"
