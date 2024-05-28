@@ -28,6 +28,13 @@ You will be prompted to accept any changes to files that have been modified.
 
 To remove software from the image, edit the `remove_software_list` variable in the [scripts/update-image.sh](scripts/update-image.sh) script.
 This is done mainly to shorten the build time.
+After editing the script, run the following command:
+
+```bash
+./scripts/update-image.sh --apply
+```
+
+Check the diff to see what has been removed.
 
 ### Add software
 
