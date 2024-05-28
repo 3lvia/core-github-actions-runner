@@ -9,10 +9,8 @@ on:
 jobs:
   generate-packer-image:
     name: 'Generate Packer image'
-    runs-on: ${{ github.head_ref == 'master' || github.ref_name == 'master' && 'elvia-runner' || 'elvia-runner-dev' }}
+    runs-on: ubuntu-latest # We don't use Elvia runner to avoid race conditions
     environment: ${{ github.head_ref == 'master' || github.ref_name == 'master' && 'prod' || 'dev' }}
-    outputs:
-      image_name: ${{ steps.set-env.outputs.image_name }}
     steps:
     - name: Clone runner images repository
       uses: actions/checkout@v4
@@ -22,17 +20,16 @@ jobs:
     - name: Setup Packer
       uses: hashicorp/setup-packer@v3
 
-    - name: Set environment variables and output
-      id: set-env
+    - name: Set environment variables
       run: |
-        echo "image_name=github-runner-$(date +%s)" >> "$GITHUB_OUTPUT"
+        echo "IMAGE_NAME=github-runner-$(date +%s)" >> "$GITHUB_ENV"
         echo "TEMP_RESOURCE_GROUP_NAME=packer-build-delete-me-$RANDOM$RANDOM" >> "$GITHUB_ENV"
 
     - name: Build image and publish to Azure
       run: |
         packer init "$IMAGE_TEMPLATE"
         packer build \
-          -var 'managed_image_name=${{ env.IMAGE_NAME}}' \
+          -var 'managed_image_name=${{ env.IMAGE_NAME }}' \
           -var 'temp_resource_group_name=${{ env.TEMP_RESOURCE_GROUP_NAME }}' \
           "$IMAGE_TEMPLATE"
       env:
@@ -43,12 +40,6 @@ jobs:
         ARM_RESOURCE_LOCATION: ${{ vars.ARM_RESOURCE_LOCATION }}
         IMAGE_TEMPLATE: './images/ubuntu/templates/ubuntu-22.04.pkr.hcl'
 
-  update-vmss:
-    name: 'Update VMSS with new image'
-    runs-on: ubuntu-latest # DON'T USE ELVIA RUNNER! THIS WILL CANCEL THE JOB
-    environment: ${{ github.head_ref == 'master' || github.ref_name == 'master' && 'prod' || 'dev' }}
-    needs: [generate-packer-image]
-    steps:
     - name: Login to Azure CLI
       uses: azure/login@v2
       with:
@@ -56,7 +47,7 @@ jobs:
 
     - name: Update VMSS with new image
       run: |
-        image_id=$(az image show -g '${{ vars.ARM_RESOURCE_GROUP }}' -n '${{ needs.generate-packer-image.outputs.image_name }}' --query id -o tsv)
+        image_id=$(az image show -g '${{ vars.ARM_RESOURCE_GROUP }}' -n '${{ env.IMAGE_NAME }}' --query id -o tsv)
         az vmss update \
           --output none \
           --resource-group '${{ vars.ARM_RESOURCE_GROUP }}' \
