@@ -7,7 +7,7 @@ on:
     paths-ignore: ['README.md', '.github/renovate.json']
 
 env:
-  IMAGE_TEMPLATE: './images/ubuntu/templates/ubuntu-22.04.pkr.hcl'
+  IMAGE_TEMPLATE: './runner-images/images/ubuntu/templates/ubuntu-22.04.pkr.hcl'
 
 jobs:
   generate-packer-image:
