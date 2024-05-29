@@ -12,7 +12,7 @@ The credentials for authenticating to Azure are stored in the GitHub repository 
 
 ### Syncing with upstream
 
-The configuraiton for the image is based on the [GitHub Actions Runner](https://github.com/actions/runner-images) repository.
+The configuraiton for the image is based on the GitHub [runner-images](https://github.com/actions/runner-images) repository.
 We have copied the configuration for the Ubuntu 22.04 image, and made some modifications.
 These modifications are mainly removeing/adding software.
 
