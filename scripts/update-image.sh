@@ -35,6 +35,7 @@ remove_software() {
     local template_file_rel="$1"
     local git_dir="$2"
     local template_file="$git_dir/$template_file_rel"
+    local toolset_file="$git_dir/images/ubuntu/toolsets/toolset-2204.json"
     local remove_software_list=(
         'apache'
         'aws-tools'
@@ -55,6 +56,7 @@ remove_software() {
         'oc-cli'
         'aliyun-cli'
         'rlang'
+        'heroku'
     )
 
     printf "Disable software report generation...\n\n"
@@ -88,6 +90,16 @@ remove_software() {
 
         printf "    Removing line from Packer configuration for '%s'...\n\n" "$software"
         sed -i "/install-$software.sh/d" "$template_file"
+
+        # Special case for 'android-sdk' since toolset file uses 'android' instead
+        if [[ "$software" == "android-sdk" ]]; then
+            software='android'
+        fi
+
+        if grep -q "$software" "$toolset_file"; then
+            printf "    Removing configuration from '%s' for '%s'...\n\n" "$toolset_file" "$software"
+            sed -i '/    "'"$software"'":/,/    },/d' "$toolset_file"
+        fi
     done
 
     printf "Done.\n\n"

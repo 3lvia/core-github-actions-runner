@@ -71,29 +71,6 @@
         "versions": [ "8", "11", "17", "21"],
         "maven": "3.8.8"
     },
-    "android": {
-        "cmdline-tools": "commandlinetools-linux-9477386_latest.zip",
-        "platform_min_version": "31",
-        "build_tools_min_version": "31.0.0",
-        "extra_list": [
-            "android;m2repository",
-            "google;m2repository",
-            "google;google_play_services"
-        ],
-        "addon_list": [
-        ],
-        "additional_tools": [
-            "cmake;3.10.2.4988404",
-            "cmake;3.18.1",
-            "cmake;3.22.1"
-        ],
-        "ndk": {
-            "default": "25",
-            "versions": [
-                "24", "25", "26"
-            ]
-        }
-    },
     "powershellModules": [
         {"name": "MarkdownPS"},
         {"name": "Microsoft.Graph"},
@@ -292,24 +269,9 @@
             "g++-12"
         ]
     },
-    "gfortran": {
-        "versions": [
-            "gfortran-9",
-            "gfortran-10",
-            "gfortran-12"
-        ]
-    },
-    "php": {
-        "versions": [
-            "8.1"
-        ]
-    },
     "rubygems": [
         {"name": "fastlane"}
     ],
-    "selenium": {
-        "version": "4"
-    },
     "node": {
         "default": "18"
     },
@@ -365,9 +327,6 @@
     ],
     "mongodb": {
         "version": "5.0"
-    },
-    "postgresql": {
-        "version": "14"
     },
     "pwsh": {
         "version": "7.4"
