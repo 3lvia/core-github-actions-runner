@@ -41,7 +41,7 @@ jobs:
         ARM_RESOURCE_LOCATION: ${{ vars.ARM_RESOURCE_LOCATION }}
 
     - name: Login to Azure CLI
-      if: ${{ !cancelled() }}
+      if: always()
       uses: azure/login@v2
       with:
         creds: '{"clientId":"${{ vars.ARM_CLIENT_ID }}","clientSecret":"${{ secrets.ARM_CLIENT_SECRET }}","subscriptionId":"${{ vars.ARM_SUBSCRIPTION_ID }}","tenantId":"${{ vars.ARM_TENANT_ID }}"}'
@@ -52,7 +52,7 @@ jobs:
         az group delete \
           --name '${{ env.TEMP_RESOURCE_GROUP_NAME }}' \
           --force-deletion-types Microsoft.Compute/virtualMachines \
-          --yes
+          --yes || true
 
     - name: Update VMSS with new image and delete old image
       run: |
