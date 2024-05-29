@@ -34,11 +34,25 @@ After editing the script, run the following command:
 ./scripts/update-image.sh --apply
 ```
 
-Check the diff to see what has been removed.
+This should remove the required configuration from Packer and also remove the installation script.
+You can double check by checking the git diff.
 
 ### Add software
 
-TODO: not implemented yet.
+To add software to the image, edit the `add_software_list` variable in the [scripts/update-image.sh](scripts/update-image.sh) script.
+
+You will also need to supply an installation script in the [scripts](scripts) directory.
+See [scripts/install-trivy.sh](scripts/install-trivy.sh) for an example.
+Your script **MUST** follow the same naming convention: `install-<software>.sh`.
+
+As with removing software, run the following command:
+
+```bash
+./scripts/update-image.sh --apply
+```
+
+This should add the required configuration to Packer and copy the installation script to the correct location.
+You can double check by checking the git diff.
 
 ## Development
 

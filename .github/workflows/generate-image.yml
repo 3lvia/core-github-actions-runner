@@ -14,6 +14,8 @@ jobs:
     name: 'Generate Packer image'
     runs-on: ubuntu-latest # We don't use Elvia runner to avoid race conditions
     environment: ${{ github.head_ref == 'master' || github.ref_name == 'master' && 'prod' || 'dev' }}
+    outputs:
+      image_name: ${{ steps.set-env.outputs.image_name }}
     steps:
     - name: Clone repository
       uses: actions/checkout@v4
@@ -21,16 +23,17 @@ jobs:
     - name: Setup Packer
       uses: hashicorp/setup-packer@v3
 
-    - name: Set environment variables
+    - name: Set environment variables and outputs
+      id: set-env
       run: |
-        echo "IMAGE_NAME=github-runner-$(date +%s)" >> "$GITHUB_ENV"
+        echo "image_name=github-runner-$(date +%s)" >> "$GITHUB_OUTPUT"
         echo "TEMP_RESOURCE_GROUP_NAME=packer-build-delete-me-$RANDOM$RANDOM" >> "$GITHUB_ENV"
 
     - name: Build image and publish to Azure
       run: |
         packer init "$IMAGE_TEMPLATE"
         packer build \
-          -var 'managed_image_name=${{ env.IMAGE_NAME }}' \
+          -var 'managed_image_name=${{ steps.set-env.outputs.image_name }}' \
           -var 'temp_resource_group_name=${{ env.TEMP_RESOURCE_GROUP_NAME }}' \
           "$IMAGE_TEMPLATE"
       env:
@@ -41,7 +44,7 @@ jobs:
         ARM_RESOURCE_LOCATION: ${{ vars.ARM_RESOURCE_LOCATION }}
 
     - name: Login to Azure CLI
-      if: always()
+      if: failure()
       uses: azure/login@v2
       with:
         creds: '{"clientId":"${{ vars.ARM_CLIENT_ID }}","clientSecret":"${{ secrets.ARM_CLIENT_SECRET }}","subscriptionId":"${{ vars.ARM_SUBSCRIPTION_ID }}","tenantId":"${{ vars.ARM_TENANT_ID }}"}'
@@ -54,16 +57,25 @@ jobs:
           --force-deletion-types Microsoft.Compute/virtualMachines \
           --yes || true
 
+  update-vmss-image:
+    name: 'Update VMSS image'
+    runs-on: ubuntu-latest
+    environment: ${{ github.head_ref == 'master' || github.ref_name == 'master' && 'prod' || 'dev' }}
+    needs: [generate-packer-image]
+    steps:
+    - name: Login to Azure CLI
+      uses: azure/login@v2
+      with:
+        creds: '{"clientId":"${{ vars.ARM_CLIENT_ID }}","clientSecret":"${{ secrets.ARM_CLIENT_SECRET }}","subscriptionId":"${{ vars.ARM_SUBSCRIPTION_ID }}","tenantId":"${{ vars.ARM_TENANT_ID }}"}'
+
     - name: Update VMSS with new image and delete old image
       run: |
-        image_id=$(az image show -g '${{ vars.ARM_RESOURCE_GROUP }}' -n '${{ env.IMAGE_NAME }}' --query id -o tsv)
+        image_id=$(az image show -g '${{ vars.ARM_RESOURCE_GROUP }}' -n '${{ needs.generate-packer-image.outputs.image_name }}' --query id -o tsv)
         old_image_id=$(az vmss show -g '${{ vars.ARM_RESOURCE_GROUP }}' -n '${{ vars.VMSS_NAME }}' --query virtualMachineProfile.storageProfile.imageReference.id -o tsv)
         az vmss update \
-          --output none \
           --resource-group '${{ vars.ARM_RESOURCE_GROUP }}' \
           --name '${{ vars.VMSS_NAME }}' \
           --set virtualMachineProfile.storageProfile.imageReference.id="$image_id"
         sleep 10
         az image delete \
-          --output none \
           --ids "$old_image_id"

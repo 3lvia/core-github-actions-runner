@@ -76,7 +76,7 @@ remove_software() {
     source      = "${var.image_folder}/software-report.json"
   }'
 
-    printf "Please delete this block of code from '%s':\n\n%s\n\n" "$template_file" "$software_gen_block"
+    printf "Please delete this block of code from '%s' (if it exists):\n\n%s\n\n" "$template_file" "$software_gen_block"
     read -p "Press any key when done." -n 1 -r
     printf "\n\n\n"
 
@@ -110,21 +110,19 @@ add_software() {
         local install_script="$git_dir/images/ubuntu/scripts/build/install-$software.sh"
         if [[ -f "$install_script" ]]; then
             printf "    Install script for '%s' already exists.\n" "$software"
-            continue
+        else
+            printf "    Adding install script for '%s'...\n" "$software"
+            cp "$local_dir/scripts/install-$software.sh" "$install_script"
         fi
 
-        printf "    Adding install script for '%s'...\n" "$software"
-        cp "$local_dir/scripts/install-$software.sh" "$install_script"
-
-        if ! grep -q "install-$software.sh" "$template_file"; then
+        if grep -q "install-$software.sh" "$template_file"; then
             printf "    Line for '%s' already exists in Packer configuration.\n\n" "$software"
-            continue
+        else
+            printf "    Adding line to Packer configuration for '%s'...\n\n" "$software"
+            sed -i \
+                's/"${path.root}\/\.\.\/scripts\/build\/install-zstd\.sh",*/"${path.root}\/\.\.\/scripts\/build\/install-zstd\.sh",\n      "${path.root}\/\.\.\/scripts\/build\/install-'"$software"'\.sh",/' \
+                "$template_file"
         fi
-
-        printf "    Adding line to Packer configuration for '%s'...\n\n" "$software"
-        sed -i \
-            's/"${path.root}/../scripts/build/install-zstd.sh/"${path.root}/../scripts/build/install-zstd.sh,\n"${path.root}/../scripts/build/install-'"$software"'.sh,/' \
-            "$template_file"
     done
 
     printf "Done.\n\n"
