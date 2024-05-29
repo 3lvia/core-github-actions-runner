@@ -48,6 +48,11 @@ remove_software() {
         'vcpkg'
         'android-sdk'
         'leiningen'
+        'kotlin'
+        'sbt'
+        'oc-cli'
+        'aliyun-cli'
+        'rlang'
     )
 
     printf "Removing software...\n\n"
