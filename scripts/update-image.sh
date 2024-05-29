@@ -122,6 +122,12 @@ add_software() {
         local install_script="$git_dir/images/ubuntu/scripts/build/install-$software.sh"
         if [[ -f "$install_script" ]]; then
             printf "    Install script for '%s' already exists.\n" "$software"
+            if cmp -s "$local_dir/scripts/install-$software.sh" "$install_script"; then
+                printf "    Install script for '%s' is up-to-date.\n" "$software"
+            else
+                printf "    Install script for '%s' is outdated, will update it.\n" "$software"
+                cp "$local_dir/scripts/install-$software.sh" "$install_script"
+            fi
         else
             printf "    Adding install script for '%s'...\n" "$software"
             cp "$local_dir/scripts/install-$software.sh" "$install_script"
