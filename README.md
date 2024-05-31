@@ -6,7 +6,7 @@ The image is generated in the GitHub workflow [generate-image.yml](.github/workf
 Packer will also publish the image to Azure.
 
 The Terraform code for the VM scale sets running the image is in the [core-terraform](https://github.com/3lvia/core-terraform) repository.
-The credentials for authenticating to Azure are stored in the GitHub repository variables/secrets and are also configured in the core-terraform repository.
+The credentials for authenticating to Azure are stored in GitHub environment variables/secrets and are also configured in the core-terraform repository.
 
 ## Updating the image
 
@@ -14,7 +14,7 @@ The credentials for authenticating to Azure are stored in the GitHub repository 
 
 The configuraiton for the image is based on the GitHub [runner-images](https://github.com/actions/runner-images) repository.
 We have copied the configuration for the Ubuntu 22.04 image, and made some modifications.
-These modifications are mainly removeing/adding software.
+These modifications are mainly removing/adding software.
 
 To update the image with the latest changes from the upstream repository, run the following command:
 
@@ -43,7 +43,7 @@ To add software to the image, edit the `add_software_list` variable in the [scri
 
 You will also need to supply an installation script in the [scripts](scripts) directory.
 See [scripts/install-trivy.sh](scripts/install-trivy.sh) for an example.
-Your script **MUST** follow the same naming convention: `install-<software>.sh`.
+Your script **MUST** follow the same naming convention, i.e.: `install-<software>.sh`.
 
 As with removing software, run the following command:
 
