@@ -1,0 +1,50 @@
+name: Update image
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # every day at midnight
+
+jobs:
+  update-image:
+    name: 'Update image'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run update script
+        run: ./scripts/update-image.sh
+        env:
+          UPDATE_IMAGE_YES: '1'
+
+      - name: Get GitHub App token
+        uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ vars.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Check for any changes and make a pull request
+        run: |
+          if [[ -z "$(git status --porcelain)" ]]; then
+            echo 'No changes to commit.'
+            exit 0
+          fi
+
+          gh_app_user_id="$(curl -gs https://api.github.com/users/$GH_APP_USERNAME | jq -r '.id')"
+          gh_app_user_email="$gh_app_user_id+$GH_APP_USERNAME@users.noreply.github.com"
+
+          git config user.email "$gh_app_user_email"
+          git config user.name "$GH_APP_USERNAME"
+
+          branch_name="chore/update-image-$(date +%s)"
+          git checkout -b "$branch_name"
+          git add .
+          git commit -m 'Update image'
+          git push -u origin "$branch_name"
+
+          gh pr create \
+            -r '3lvia/core-developer' \
+            -B 'develop' \
+            -f
