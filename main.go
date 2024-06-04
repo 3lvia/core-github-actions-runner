@@ -26,14 +26,13 @@ func check_diff(files_path string, local_git_dir string, git_dir string) {
 		file_diff := string(file_diff_byte)
 
 		if file_diff != "" {
-			fmt.Printf("\n\n\nChanges in '%s':\n\n\n", file)
+			fmt.Printf("\nChanges in '%s':\n\n", file)
 			fmt.Println(file_diff)
-			fmt.Printf("\n\n\n")
-			fmt.Println("Do you want to apply these changes to " + file + "? [y/N] ")
-			fmt.Printf("\n\n\n")
+			fmt.Printf("\n\n")
+			fmt.Println("Do you want to apply these changes to " + file + "? [y/N]\n")
 			var REPLY string
 			fmt.Scanln(&REPLY)
-			if REPLY == "Y" || REPLY == "y" {
+			if REPLY == "Y" || REPLY == "y" || os.Getenv("ACCEPT_ALL") == "true" {
 				cp, cp_err := exec.Command("cp", git_dir+"/"+file, local_git_dir+"/"+file).CombinedOutput()
 				if cp_err != nil {
 					fmt.Println(string(cp))
@@ -49,6 +48,7 @@ func check_diff(files_path string, local_git_dir string, git_dir string) {
 func remove_software(template_file_rel string, git_dir string) {
 	template_file := git_dir + "/" + template_file_rel
 	toolset_file := git_dir + "/images/ubuntu/toolsets/toolset-2204.json"
+	// Add software here to remove
 	remove_software_list := []string{
 		"apache",
 		"aws-tools",
@@ -101,14 +101,16 @@ func remove_software(template_file_rel string, git_dir string) {
 
 	for _, software := range remove_software_list {
 		fmt.Printf("    Removing install script for '%s'...\n", software)
-		rm_rf_script_err := exec.Command("rm", "-f", git_dir+"/images/ubuntu/scripts/build/install-"+software+".sh").Run()
+		rm_rf_script, rm_rf_script_err := exec.Command("rm", "-f", git_dir+"/images/ubuntu/scripts/build/install-"+software+".sh").CombinedOutput()
 		if rm_rf_script_err != nil {
+			fmt.Println(string(rm_rf_script))
 			log.Fatal(rm_rf_script_err)
 		}
 
 		fmt.Printf("    Removing line from Packer configuration for '%s'...\n", software)
-		replace_script_err := exec.Command("sed", "-i", "/install-"+software+".sh/d", template_file).Run()
+		replace_script, replace_script_err := exec.Command("sed", "-i", "/install-"+software+".sh/d", template_file).CombinedOutput()
 		if replace_script_err != nil {
+			fmt.Println(string(replace_script))
 			log.Fatal(replace_script_err)
 		}
 
@@ -119,8 +121,9 @@ func remove_software(template_file_rel string, git_dir string) {
 
 		if strings.Contains(toolset_file, software) {
 			fmt.Printf("    Removing configuration from '%s' for '%s'...\n\n", toolset_file, software)
-			sed_err := exec.Command("sed", "-i", "/    \""+software+"\":/,/    },/d", toolset_file).Run()
+			sed, sed_err := exec.Command("sed", "-i", "/    \""+software+"\":/,/    },/d", toolset_file).CombinedOutput()
 			if sed_err != nil {
+				fmt.Println(string(sed))
 				log.Fatal(sed_err)
 			}
 		}
@@ -132,6 +135,7 @@ func remove_software(template_file_rel string, git_dir string) {
 
 func add_software(template_file_rel string, local_dir string, git_dir string) {
 	template_file := git_dir + "/" + template_file_rel
+	// Add software here to add
 	add_software_list := []string{
 		"trivy",
 	}
@@ -172,10 +176,17 @@ func add_software(template_file_rel string, local_dir string, git_dir string) {
 
 			template_file_lines := strings.Split(string(template_file_contents), "\n")
 			for i, line := range template_file_lines {
-				if strings.Contains(line, "\"${path.root}/../scripts/build/install-zstd.sh\"") {
-					template_file_lines[i] = line + ",\n      \"${path.root}/../scripts/build/install-" + software + ".sh\","
+				zstd_line := "\"${path.root}/../scripts/build/install-zstd.sh\""
+				new_line := "\n      \"${path.root}/../scripts/build/install-" + software + ".sh\","
+
+				// Account for zstd line not having a comma at the end
+				if line == zstd_line {
+					template_file_lines[i] = line + "," + new_line
+				} else if line == zstd_line+"," {
+					template_file_lines[i] = line + new_line
 				}
 			}
+
 			template_file_output := strings.Join(template_file_lines, "\n")
 			write_err := ioutil.WriteFile(template_file, []byte(template_file_output), 0644)
 			if write_err != nil {

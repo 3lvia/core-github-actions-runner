@@ -14,24 +14,23 @@ The credentials for authenticating to Azure are stored in GitHub environment var
 
 The configuraiton for the image is based on the GitHub [runner-images](https://github.com/actions/runner-images) repository.
 We have copied the configuration for the Ubuntu 22.04 image, and made some modifications.
-These modifications are mainly removing/adding software.
+Syncing should be handled automatically by the GitHub workflow [sync-upstream.yml](.github/workflows/sync-upstream.yml).
+This workflow will run on a schedule and check for changes in the upstream repository, and create a pull request if necessary.
 
-To update the image with the latest changes from the upstream repository, run the following command:
+If you want to manually sync with the upstream repository, you can run the following command:
 
 ```bash
-./scripts/update-image.sh
+go run main.go
 ```
-
-You will be prompted to accept any changes to files that have been modified.
 
 ### Remove software
 
-To remove software from the image, edit the `remove_software_list` variable in the [scripts/update-image.sh](scripts/update-image.sh) script.
-This is done mainly to shorten the build time.
+We remove some software from the image to reduce build times.
+To remove software from the image, edit the `remove_software_list` variable in [main.go](main.go).
 After editing the script, run the following command:
 
 ```bash
-./scripts/update-image.sh --apply
+go run main.go --apply
 ```
 
 This should remove the required configuration from Packer and also remove the installation script.
@@ -39,7 +38,7 @@ You can double check by checking the git diff.
 
 ### Add software
 
-To add software to the image, edit the `add_software_list` variable in the [scripts/update-image.sh](scripts/update-image.sh) script.
+To add software to the image, edit the `add_software_list` variable in [main.go](main.go).
 
 You will also need to supply an installation script in the [scripts](scripts) directory.
 See [scripts/install-trivy.sh](scripts/install-trivy.sh) for an example.
@@ -48,7 +47,7 @@ Your script **MUST** follow the same naming convention, i.e.: `install-<software
 As with removing software, run the following command:
 
 ```bash
-./scripts/update-image.sh --apply
+go run main.go --apply
 ```
 
 This should add the required configuration to Packer and copy the installation script to the correct location.
