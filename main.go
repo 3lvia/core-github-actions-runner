@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -10,19 +11,41 @@ import (
 )
 
 func check_diff(files_path string, local_git_dir string, git_dir string) {
-	files, files_err := exec.Command("git", "ls-files", files_path).CombinedOutput()
-	if files_err != nil {
-		fmt.Println(string(files))
-		log.Fatal(files_err)
+	os.Chdir(git_dir)
+	files_byte, err := exec.Command("git", "ls-files", files_path).CombinedOutput()
+	if err != nil {
+		fmt.Println(string(files_byte))
+		log.Fatal(err)
 	}
 
-	for _, byte_file := range files {
+	files := string(files_byte)
+
+	if files == "" {
+		fmt.Println("No files found.")
+		return
+	}
+
+	for _, byte_file := range strings.Split(files, "\n") {
 		file := string(byte_file)
-		file_diff_byte, file_diff_byte_err := exec.Command("diff", "-u", "--color", local_git_dir+"/"+file, git_dir+"/"+file).CombinedOutput()
-		if file_diff_byte_err != nil {
-			fmt.Println(string(file_diff_byte))
-			log.Fatal(file_diff_byte_err)
+
+		if file == "" {
+			return
 		}
+
+		local_git_dir_file := local_git_dir + "/" + file
+		if _, err := os.Stat(local_git_dir_file); errors.Is(err, os.ErrNotExist) {
+			fmt.Printf("File '%s' does not exist in local git directory.\n", file)
+			continue
+		}
+
+		git_dir_file := git_dir + "/" + file
+		if _, err := os.Stat(git_dir_file); errors.Is(err, os.ErrNotExist) {
+			fmt.Printf("File '%s' does not exist in git temp directory.\n", file)
+			continue
+		}
+
+		// Ignore error, diff will return non-zero exit code if files are different.
+		file_diff_byte, _ := exec.Command("diff", "-u", "--color", local_git_dir_file, git_dir_file).CombinedOutput()
 		file_diff := string(file_diff_byte)
 
 		if file_diff != "" {
@@ -33,10 +56,10 @@ func check_diff(files_path string, local_git_dir string, git_dir string) {
 			var REPLY string
 			fmt.Scanln(&REPLY)
 			if REPLY == "Y" || REPLY == "y" || os.Getenv("ACCEPT_ALL") == "true" {
-				cp, cp_err := exec.Command("cp", git_dir+"/"+file, local_git_dir+"/"+file).CombinedOutput()
-				if cp_err != nil {
+				cp, err := exec.Command("cp", git_dir_file, local_git_dir_file).CombinedOutput()
+				if err != nil {
 					fmt.Println(string(cp))
-					log.Fatal(cp_err)
+					log.Fatal(err)
 				}
 			}
 		} else {
@@ -202,10 +225,16 @@ func add_software(template_file_rel string, local_dir string, git_dir string) {
 
 func validate_packer(template_file string) {
 	fmt.Println("Validating Packer configuration for '" + template_file + "'...")
-	packer, packer_err := exec.Command("packer", "validate", "-var", "managed_image_resource_group_name=test", "-var", "location=westeurope", template_file).CombinedOutput()
-	if packer_err != nil {
-		fmt.Println(string(packer))
-		log.Fatal(packer_err)
+	packer_init, packer_init_err := exec.Command("packer", "init", template_file).CombinedOutput()
+	if packer_init_err != nil {
+		fmt.Println(string(packer_init))
+		log.Fatal(packer_init_err)
+	}
+
+	packer_validate, packer_validate_err := exec.Command("packer", "validate", "-var", "managed_image_resource_group_name=test", "-var", "location=westeurope", template_file).CombinedOutput()
+	if packer_validate_err != nil {
+		fmt.Println(string(packer_validate))
+		log.Fatal(packer_validate_err)
 	}
 	fmt.Println("Done.\n")
 }
@@ -224,7 +253,7 @@ func update(template_file string, local_dir string) {
 	defer os.RemoveAll(tmp_dir)
 
 	fmt.Println("Cloning runner-images repository...")
-	clone, clone_err := exec.Command("git", "clone", "git@github.com:actions/runner-images.git", "-q", git_dir).CombinedOutput()
+	clone, clone_err := exec.Command("git", "clone", "https://github.com/actions/runner-images.git", "-q", git_dir).CombinedOutput()
 	if clone_err != nil {
 		fmt.Println(string(clone))
 		log.Fatal(clone_err)
@@ -258,7 +287,9 @@ func update(template_file string, local_dir string) {
 	fmt.Println("Done.\n")
 
 	fmt.Println("Checking out latest tag '" + latest_tag + "'...")
-	checkout, checkout_err := exec.Command("git", "checkout", latest_tag, "-q").CombinedOutput()
+	// TODO: uncomment
+	// checkout, checkout_err := exec.Command("git", "checkout", latest_tag, "-q").CombinedOutput()
+	checkout, checkout_err := exec.Command("git", "checkout", "ubuntu22/20240514.2", "-q").CombinedOutput()
 	if checkout_err != nil {
 		fmt.Println(string(checkout))
 		log.Fatal(checkout_err)
@@ -278,11 +309,14 @@ func update(template_file string, local_dir string) {
 
 	for _, file_dir := range files_dirs {
 		local_git_dir := local_dir + "/runner-images"
-		mkdir_err := exec.Command("mkdir", "-p", local_git_dir+"/"+file_dir).Run()
+		mkdir, mkdir_err := exec.Command("mkdir", "-p", local_git_dir+"/"+file_dir).CombinedOutput()
 		if mkdir_err != nil {
-			fmt.Println("Error: ", mkdir_err)
+			fmt.Println(string(mkdir))
+			log.Fatal(mkdir_err)
 		}
+		fmt.Printf("Checking differences in '%s'...\n", file_dir)
 		check_diff(file_dir, local_git_dir, git_dir)
+		fmt.Println("Done.\n")
 	}
 
 	validate_packer(local_dir + "/runner-images/" + template_file)
