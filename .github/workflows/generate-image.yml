@@ -1,6 +1,5 @@
 name: Generate image
 
-# TODO: add cron trigger
 on:
   push:
     branches: [master, develop]
