@@ -1,3 +1,3 @@
-module elvia.io/update-image
+module elvia.io/sync-upstream
 
 go 1.22.3

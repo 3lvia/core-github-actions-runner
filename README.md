@@ -12,8 +12,9 @@ The credentials for authenticating to Azure are stored in GitHub environment var
 
 ### Syncing with upstream
 
-The configuraiton for the image is based on the GitHub [runner-images](https://github.com/actions/runner-images) repository.
+The configuration for the image is based on the GitHub [runner-images](https://github.com/actions/runner-images) repository.
 We have copied the configuration for the Ubuntu 22.04 image, and made some modifications.
+
 Syncing should be handled automatically by the GitHub workflow [sync-upstream.yml](.github/workflows/sync-upstream.yml).
 This workflow will run on a schedule and check for changes in the upstream repository, and create a pull request if necessary.
 
@@ -23,11 +24,13 @@ If you want to manually sync with the upstream repository, you can run the follo
 go run main.go
 ```
 
+Git and Packer must be installed on your machine for this to work.
+
 ### Remove software
 
 We remove some software from the image to reduce build times.
 To remove software from the image, edit the `remove_software_list` variable in [main.go](main.go).
-After editing the script, run the following command:
+After editing the file, run the following command:
 
 ```bash
 go run main.go --apply
