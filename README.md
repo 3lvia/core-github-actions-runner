@@ -56,6 +56,14 @@ go run main.go --apply
 This should add the required configuration to Packer and copy the installation script to the correct location.
 You can double check by checking the git diff.
 
+## Deleting old runners
+
+When scaling the amount of VM instances, the VM's that get terminated will not be deregistered as GitHub runners.
+This means that they will still show up in the list of runners in the organizations settings, but will be permanently 'offline'.
+When registering new runners, they will usually replace the old ones since the hostname is the same.
+However, this is not always the case. Therefore, we have a workflow that will delete all runners that are offline.
+This is done in the [delete-runners.yml](.github/workflows/delete-runners.yml) workflow.
+
 ## Development
 
 We use two branches `master` and `develop` and their corresponding environments `prod` and `dev`.
