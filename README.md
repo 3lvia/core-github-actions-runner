@@ -66,10 +66,11 @@ This is done in the [delete-runners.yml](.github/workflows/delete-runners.yml) w
 
 ## Development
 
-We use two branches `master` and `develop` and their corresponding environments `prod` and `dev`.
-This mirrors the setup in the core-terraform repository. This is to simplify the setup of credentials for GitHub Actions in core-terraform.
-A consequence of this is also that we can test building images in the `develop` branch before merging to `master`.
+We use trunk-based development, and two environments `prod` and `dev`.
+Any pull request to the trunk branch `trunk` will generate and push an image to the `dev` environment.
+When merging to the `trunk` branch, the image will be pushed to the `prod` environment.
+In both cases, these images will be deployed to either the VMSS 'elvia-runner-dev' or the VMSS 'elvia-runner-prod', respectively.
 
-The image produced by the `develop` branch is used by a single VMSS in the `dev` environment of core-terraform.
-Use this for testing. SSH access to the VMSS (for dev only!) can also be enabled in core-terraform.
-You need to supply your own SSH public key (RSA) in the module declaration.
+When testing, open a pull request to trunk and generate your image, which will be deployed to the `dev` environment.
+SSH access is enabled for the dev environment, so you can connect to the VM and test your changes.
+SSH access is configured in core-terraform, and you must provide your own public key.

@@ -12,7 +12,7 @@ jobs:
     permissions:
       contents: write
     env:
-      BASE_BRANCH: 'develop'
+      BASE_BRANCH: 'trunk'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

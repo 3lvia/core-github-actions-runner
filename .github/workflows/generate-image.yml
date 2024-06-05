@@ -2,7 +2,10 @@ name: Generate image
 
 on:
   push:
-    branches: [master, develop]
+    branches: [trunk]
+    paths-ignore: ['README.md', '.github/renovate.json']
+  pull_request:
+    branches: [trunk]
     paths-ignore: ['README.md', '.github/renovate.json']
 
 env:
@@ -12,7 +15,7 @@ jobs:
   generate-packer-image:
     name: 'Generate Packer image'
     runs-on: ubuntu-latest # We don't use Elvia runner to avoid race conditions
-    environment: ${{ github.head_ref == 'master' || github.ref_name == 'master' && 'prod' || 'dev' }}
+    environment: ${{ github.event_name == 'push' && 'prod' || 'dev' }}
     outputs:
       image_name: ${{ steps.set-env.outputs.image_name }}
     steps:
@@ -25,7 +28,7 @@ jobs:
     - name: Set environment variables and outputs
       id: set-env
       run: |
-        echo "image_name=github-runner-$(date +%s)" >> "$GITHUB_OUTPUT"
+        echo "image_name=elvia-runner-$(date +%s)" >> "$GITHUB_OUTPUT"
         echo "TEMP_RESOURCE_GROUP_NAME=packer-build-delete-me-$RANDOM$RANDOM" >> "$GITHUB_ENV"
 
     - name: Build image and publish to Azure
@@ -59,7 +62,7 @@ jobs:
   update-vmss-image:
     name: 'Update VMSS image'
     runs-on: ubuntu-latest
-    environment: ${{ github.head_ref == 'master' || github.ref_name == 'master' && 'prod' || 'dev' }}
+    environment: ${{ github.event_name == 'push' && 'prod' || 'dev' }}
     needs: [generate-packer-image]
     steps:
     - name: Login to Azure CLI
