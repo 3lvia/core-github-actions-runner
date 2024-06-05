@@ -8,7 +8,7 @@ on:
 jobs:
   sync-upstream:
     name: 'Sync upstream'
-    runs-on: ubuntu-latest
+    runs-on: elvia-runner
     permissions:
       contents: write
     env:

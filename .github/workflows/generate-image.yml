@@ -61,7 +61,7 @@ jobs:
 
   update-vmss-image:
     name: 'Update VMSS image'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest # We don't use Elvia runner to avoid race conditions
     environment: ${{ github.event_name == 'push' && 'prod' || 'dev' }}
     needs: [generate-packer-image]
     steps:
