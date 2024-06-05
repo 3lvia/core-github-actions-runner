@@ -3,10 +3,16 @@ name: Generate image
 on:
   push:
     branches: [trunk]
-    paths-ignore: ['README.md', '.github/renovate.json']
+    paths:
+      - 'runner-images/*'
+      - 'scripts/*'
+      - '.github/workflows/generate-image.yml'
   pull_request:
     branches: [trunk]
-    paths-ignore: ['README.md', '.github/renovate.json']
+    paths:
+      - 'runner-images/*'
+      - 'scripts/*'
+      - '.github/workflows/generate-image.yml'
 
 env:
   IMAGE_TEMPLATE: './runner-images/images/ubuntu/templates/ubuntu-22.04.pkr.hcl'

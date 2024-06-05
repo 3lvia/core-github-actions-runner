@@ -1,8 +1,9 @@
-name: Delete offline runners
+name: Delete runners
 
 on:
   schedule:
-    - cron: '56 7 * * *' # every day at 07:56
+    - cron: '12 * * * *' # every hour at 12 minutes past
+  workflow_dispatch:
 
 jobs:
   delete-offline-runners:
