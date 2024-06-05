@@ -25,45 +25,45 @@ jobs:
     outputs:
       image_name: ${{ steps.set-env.outputs.image_name }}
     steps:
-    - name: Clone repository
-      uses: actions/checkout@v4
+      - name: Clone repository
+        uses: actions/checkout@v4
 
-    - name: Setup Packer
-      uses: hashicorp/setup-packer@v3
+      - name: Setup Packer
+        uses: hashicorp/setup-packer@v3
 
-    - name: Set environment variables and outputs
-      id: set-env
-      run: |
-        echo "image_name=elvia-runner-$(date +%s)" >> "$GITHUB_OUTPUT"
-        echo "TEMP_RESOURCE_GROUP_NAME=packer-build-delete-me-$RANDOM$RANDOM" >> "$GITHUB_ENV"
+      - name: Set environment variables and outputs
+        id: set-env
+        run: |
+          echo "image_name=elvia-runner-$(date +%s)" >> "$GITHUB_OUTPUT"
+          echo "TEMP_RESOURCE_GROUP_NAME=packer-build-delete-me-$RANDOM$RANDOM" >> "$GITHUB_ENV"
 
-    - name: Build image and publish to Azure
-      run: |
-        packer init "$IMAGE_TEMPLATE"
-        packer build \
-          -var 'managed_image_name=${{ steps.set-env.outputs.image_name }}' \
-          -var 'temp_resource_group_name=${{ env.TEMP_RESOURCE_GROUP_NAME }}' \
-          "$IMAGE_TEMPLATE"
-      env:
-        ARM_SUBSCRIPTION_ID: ${{ vars.ARM_SUBSCRIPTION_ID }}
-        ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID }}
-        ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-        ARM_RESOURCE_GROUP: ${{ vars.ARM_RESOURCE_GROUP }}
-        ARM_RESOURCE_LOCATION: ${{ vars.ARM_RESOURCE_LOCATION }}
+      - name: Build image and publish to Azure
+        run: |
+          packer init "$IMAGE_TEMPLATE"
+          packer build \
+            -var 'managed_image_name=${{ steps.set-env.outputs.image_name }}' \
+            -var 'temp_resource_group_name=${{ env.TEMP_RESOURCE_GROUP_NAME }}' \
+            "$IMAGE_TEMPLATE"
+        env:
+          ARM_SUBSCRIPTION_ID: ${{ vars.ARM_SUBSCRIPTION_ID }}
+          ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_RESOURCE_GROUP: ${{ vars.ARM_RESOURCE_GROUP }}
+          ARM_RESOURCE_LOCATION: ${{ vars.ARM_RESOURCE_LOCATION }}
 
-    - name: Login to Azure CLI
-      if: failure()
-      uses: azure/login@v2
-      with:
-        creds: '{"clientId":"${{ vars.ARM_CLIENT_ID }}","clientSecret":"${{ secrets.ARM_CLIENT_SECRET }}","subscriptionId":"${{ vars.ARM_SUBSCRIPTION_ID }}","tenantId":"${{ vars.ARM_TENANT_ID }}"}'
+      - name: Login to Azure CLI
+        if: failure()
+        uses: azure/login@v2
+        with:
+          creds: '{"clientId":"${{ vars.ARM_CLIENT_ID }}","clientSecret":"${{ secrets.ARM_CLIENT_SECRET }}","subscriptionId":"${{ vars.ARM_SUBSCRIPTION_ID }}","tenantId":"${{ vars.ARM_TENANT_ID }}"}'
 
-    - name: Clean up resources created by Packer if build fails
-      if: failure()
-      run: |
-        az group delete \
-          --name '${{ env.TEMP_RESOURCE_GROUP_NAME }}' \
-          --force-deletion-types Microsoft.Compute/virtualMachines \
-          --yes || true
+      - name: Clean up resources created by Packer if build fails
+        if: failure()
+        run: |
+          az group delete \
+            --name '${{ env.TEMP_RESOURCE_GROUP_NAME }}' \
+            --force-deletion-types Microsoft.Compute/virtualMachines \
+            --yes || true
 
   update-vmss-image:
     name: 'Update VMSS image'
@@ -71,19 +71,19 @@ jobs:
     environment: ${{ github.event_name == 'push' && 'prod' || 'dev' }}
     needs: [generate-packer-image]
     steps:
-    - name: Login to Azure CLI
-      uses: azure/login@v2
-      with:
-        creds: '{"clientId":"${{ vars.ARM_CLIENT_ID }}","clientSecret":"${{ secrets.ARM_CLIENT_SECRET }}","subscriptionId":"${{ vars.ARM_SUBSCRIPTION_ID }}","tenantId":"${{ vars.ARM_TENANT_ID }}"}'
+      - name: Login to Azure CLI
+        uses: azure/login@v2
+        with:
+          creds: '{"clientId":"${{ vars.ARM_CLIENT_ID }}","clientSecret":"${{ secrets.ARM_CLIENT_SECRET }}","subscriptionId":"${{ vars.ARM_SUBSCRIPTION_ID }}","tenantId":"${{ vars.ARM_TENANT_ID }}"}'
 
-    - name: Update VMSS with new image and delete old image
-      run: |
-        image_id=$(az image show -g '${{ vars.ARM_RESOURCE_GROUP }}' -n '${{ needs.generate-packer-image.outputs.image_name }}' --query id -o tsv)
-        old_image_id=$(az vmss show -g '${{ vars.ARM_RESOURCE_GROUP }}' -n '${{ vars.VMSS_NAME }}' --query virtualMachineProfile.storageProfile.imageReference.id -o tsv)
-        az vmss update \
-          --resource-group '${{ vars.ARM_RESOURCE_GROUP }}' \
-          --name '${{ vars.VMSS_NAME }}' \
-          --set virtualMachineProfile.storageProfile.imageReference.id="$image_id"
-        sleep 10
-        az image delete \
-          --ids "$old_image_id"
+      - name: Update VMSS with new image and delete old image
+        run: |
+          image_id=$(az image show -g '${{ vars.ARM_RESOURCE_GROUP }}' -n '${{ needs.generate-packer-image.outputs.image_name }}' --query id -o tsv)
+          old_image_id=$(az vmss show -g '${{ vars.ARM_RESOURCE_GROUP }}' -n '${{ vars.VMSS_NAME }}' --query virtualMachineProfile.storageProfile.imageReference.id -o tsv)
+          az vmss update \
+            --resource-group '${{ vars.ARM_RESOURCE_GROUP }}' \
+            --name '${{ vars.VMSS_NAME }}' \
+            --set virtualMachineProfile.storageProfile.imageReference.id="$image_id"
+          sleep 10
+          az image delete \
+            --ids "$old_image_id"
