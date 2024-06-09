@@ -30,13 +30,12 @@ jobs:
         env:
           ACCEPT_ALL: 'true'
 
-      - name: Get GitHub App token
+      - name: Get GitHub App token for repository
         uses: actions/create-github-app-token@v1
         id: app-token
         with:
           app-id: ${{ vars.GH_APP_ID }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
 
       - name: Check for any changes and make a pull request
         run: |
