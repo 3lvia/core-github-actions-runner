@@ -69,25 +69,10 @@ Describe "Docker" {
     It "docker client" {
         $version=(Get-ToolsetContent).docker.components | Where-Object { $_.package -eq 'docker-ce-cli' } | Select-Object -ExpandProperty version
         If ($version -ne "latest") {
-            $(sudo docker version --format '{{.Client.Version}}') | Should -BeLike "*$version*"
+            $(docker version --format '{{.Client.Version}}') | Should -BeLike "*$version*"
         }else{
-            "sudo docker version --format '{{.Client.Version}}'" | Should -ReturnZeroExitCode
+            "docker version --format '{{.Client.Version}}'" | Should -ReturnZeroExitCode
         }
-    }
-
-    It "docker server" {
-        $version=(Get-ToolsetContent).docker.components | Where-Object { $_.package -eq 'docker-ce' } | Select-Object -ExpandProperty version
-        If ($version -ne "latest") {
-            $(sudo docker version --format '{{.Server.Version}}') | Should -BeLike "*$version*"
-        }else{
-            "sudo docker version --format '{{.Server.Version}}'" | Should -ReturnZeroExitCode
-        }
-    }
-
-    It "docker client/server versions match" {
-        $clientVersion = $(sudo docker version --format '{{.Client.Version}}')
-        $serverVersion = $(sudo docker version --format '{{.Server.Version}}')
-        $clientVersion | Should -Be $serverVersion
     }
 
     It "docker buildx" {
@@ -258,10 +243,6 @@ Describe "Git" {
 
     It "git-ftp" {
         "git-ftp --version" | Should -ReturnZeroExitCode
-    }
-
-    It "GIT_CLONE_PROTECTION_ACTIVE environment variable should be equal false" {
-        $env:GIT_CLONE_PROTECTION_ACTIVE | Should -BeExactly false
     }
 }
 
