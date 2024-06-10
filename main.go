@@ -113,11 +113,18 @@ func remove_software(template_file_rel string, git_dir string) {
     direction   = "download"
     source      = "${var.image_folder}/software-report.json"
   }`
-	template_file_contents, err := ioutil.ReadFile(template_file)
+
+	template_file_contents_bytes, err := ioutil.ReadFile(template_file)
 	if err != nil {
 		log.Fatal(err)
 	}
-	strings.Replace(software_gen_block, string(template_file_contents), "", -1)
+	template_file_contents := string(template_file_contents_bytes)
+
+	template_file_new_contents := strings.Replace(template_file_contents, software_gen_block, "", 1)
+	err_ := ioutil.WriteFile(template_file, []byte(template_file_new_contents), 0644)
+	if err_ != nil {
+		log.Fatal(err_)
+	}
 	fmt.Println("Done.\n")
 
 	fmt.Println("Removing software...")
@@ -142,12 +149,13 @@ func remove_software(template_file_rel string, git_dir string) {
 			software = "android"
 		}
 
-		toolset_file_contents, err := ioutil.ReadFile(toolset_file)
+		toolset_file_contents_bytes, err := ioutil.ReadFile(toolset_file)
 		if err != nil {
 			log.Fatal(err)
 		}
+		toolset_file_contents := string(toolset_file_contents_bytes)
 
-		if strings.Contains(string(toolset_file_contents), software) {
+		if strings.Contains(toolset_file_contents, software) {
 			fmt.Printf("    Removing configuration from '%s' for '%s'...\n\n", toolset_file, software)
 			sed, err := exec.Command("sed", "-i", "/    \""+software+"\":/,/    },/d", toolset_file).CombinedOutput()
 			if err != nil {
@@ -193,26 +201,35 @@ func add_software(template_file_rel string, local_dir string, git_dir string) {
 			}
 		}
 
-		if strings.Contains(template_file, "install-"+software+".sh") {
+		template_file_contents_bytes, err := ioutil.ReadFile(template_file)
+		if err != nil {
+			log.Fatal(err)
+		}
+		template_file_contents := string(template_file_contents_bytes)
+
+		if strings.Contains(template_file_contents, "install-"+software+".sh") {
 			fmt.Printf("    Line for '%s' already exists in Packer configuration.", software)
 		} else {
 			fmt.Printf("    Adding line to Packer configuration for '%s'...", software)
-			template_file_contents, err := ioutil.ReadFile(template_file)
-			if err != nil {
-				log.Fatal(err)
-			}
 
-			template_file_lines := strings.Split(string(template_file_contents), "\n")
+			template_file_lines := strings.Split(template_file_contents, "\n")
+			found_line := false
 			for i, line := range template_file_lines {
-				zstd_line := "\"${path.root}/../scripts/build/install-zstd.sh\""
+				zstd_line := "      \"${path.root}/../scripts/build/install-zstd.sh\""
 				new_line := "\n      \"${path.root}/../scripts/build/install-" + software + ".sh\","
 
 				// Account for zstd line not having a comma at the end
 				if line == zstd_line {
 					template_file_lines[i] = line + "," + new_line
+					found_line = true
 				} else if line == zstd_line+"," {
 					template_file_lines[i] = line + new_line
+					found_line = true
 				}
+			}
+
+			if !found_line {
+				log.Fatal("Could not find line to insert new software.")
 			}
 
 			template_file_output := strings.Join(template_file_lines, "\n")
