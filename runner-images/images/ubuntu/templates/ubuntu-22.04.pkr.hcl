@@ -183,13 +183,18 @@ build {
     inline          = ["mkdir ${var.image_folder}", "chmod 777 ${var.image_folder}"]
   }
 
+  provisioner "file" {
+    destination = "${var.helper_script_folder}"
+    source      = "${path.root}/../scripts/helpers"
+  }
+
   provisioner "shell" {
     execute_command = "sudo sh -c '{{ .Vars }} {{ .Path }}'"
     script          = "${path.root}/../scripts/build/configure-apt-mock.sh"
   }
 
   provisioner "shell" {
-    environment_vars = ["DEBIAN_FRONTEND=noninteractive"]
+    environment_vars = ["HELPER_SCRIPTS=${var.helper_script_folder}","DEBIAN_FRONTEND=noninteractive"]
     execute_command  = "sudo sh -c '{{ .Vars }} {{ .Path }}'"
     scripts          = [
       "${path.root}/../scripts/build/install-ms-repos.sh",
@@ -201,11 +206,6 @@ build {
   provisioner "shell" {
     execute_command = "sudo sh -c '{{ .Vars }} {{ .Path }}'"
     script          = "${path.root}/../scripts/build/configure-limits.sh"
-  }
-
-  provisioner "file" {
-    destination = "${var.helper_script_folder}"
-    source      = "${path.root}/../scripts/helpers"
   }
 
   provisioner "file" {
@@ -313,8 +313,7 @@ build {
       "${path.root}/../scripts/build/install-yq.sh",
       "${path.root}/../scripts/build/install-pypy.sh",
       "${path.root}/../scripts/build/install-python.sh",
-      "${path.root}/../scripts/build/install-zstd.sh",
-      "${path.root}/../scripts/build/install-trivy.sh",
+      "${path.root}/../scripts/build/install-zstd.sh"
     ]
   }
 
@@ -359,6 +358,23 @@ build {
     pause_before        = "1m0s"
     scripts             = ["${path.root}/../scripts/build/cleanup.sh"]
     start_retry_timeout = "10m"
+  }
+
+  provisioner "shell" {
+    environment_vars = ["IMAGE_VERSION=${var.image_version}", "INSTALLER_SCRIPT_FOLDER=${var.installer_script_folder}"]
+    inline           = ["pwsh -File ${var.image_folder}/SoftwareReport/Generate-SoftwareReport.ps1 -OutputDirectory ${var.image_folder}", "pwsh -File ${var.image_folder}/tests/RunAll-Tests.ps1 -OutputDirectory ${var.image_folder}"]
+  }
+
+  provisioner "file" {
+    destination = "${path.root}/../Ubuntu2204-Readme.md"
+    direction   = "download"
+    source      = "${var.image_folder}/software-report.md"
+  }
+
+  provisioner "file" {
+    destination = "${path.root}/../software-report.json"
+    direction   = "download"
+    source      = "${var.image_folder}/software-report.json"
   }
 
   provisioner "shell" {
