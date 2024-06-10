@@ -113,9 +113,9 @@ func remove_software(template_file_rel string, git_dir string) {
     direction   = "download"
     source      = "${var.image_folder}/software-report.json"
   }`
-	template_file_contents, template_file_contents_err := ioutil.ReadFile(template_file)
-	if template_file_contents_err != nil {
-		log.Fatal(template_file_contents_err)
+	template_file_contents, err := ioutil.ReadFile(template_file)
+	if err != nil {
+		log.Fatal(err)
 	}
 	strings.Replace(software_gen_block, string(template_file_contents), "", -1)
 	fmt.Println("Done.\n")
@@ -124,17 +124,17 @@ func remove_software(template_file_rel string, git_dir string) {
 
 	for _, software := range remove_software_list {
 		fmt.Printf("    Removing install script for '%s'...\n", software)
-		rm_rf_script, rm_rf_script_err := exec.Command("rm", "-f", git_dir+"/images/ubuntu/scripts/build/install-"+software+".sh").CombinedOutput()
-		if rm_rf_script_err != nil {
+		rm_rf_script, err := exec.Command("rm", "-f", git_dir+"/images/ubuntu/scripts/build/install-"+software+".sh").CombinedOutput()
+		if err != nil {
 			fmt.Println(string(rm_rf_script))
-			log.Fatal(rm_rf_script_err)
+			log.Fatal(err)
 		}
 
 		fmt.Printf("    Removing line from Packer configuration for '%s'...\n", software)
-		replace_script, replace_script_err := exec.Command("sed", "-i", "/install-"+software+".sh/d", template_file).CombinedOutput()
-		if replace_script_err != nil {
+		replace_script, err := exec.Command("sed", "-i", "/install-"+software+".sh/d", template_file).CombinedOutput()
+		if err != nil {
 			fmt.Println(string(replace_script))
-			log.Fatal(replace_script_err)
+			log.Fatal(err)
 		}
 
 		// Special case for 'android-sdk' since toolset file uses 'android' instead
@@ -142,12 +142,17 @@ func remove_software(template_file_rel string, git_dir string) {
 			software = "android"
 		}
 
-		if strings.Contains(toolset_file, software) {
+		toolset_file_contents, err := ioutil.ReadFile(toolset_file)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if strings.Contains(string(toolset_file_contents), software) {
 			fmt.Printf("    Removing configuration from '%s' for '%s'...\n\n", toolset_file, software)
-			sed, sed_err := exec.Command("sed", "-i", "/    \""+software+"\":/,/    },/d", toolset_file).CombinedOutput()
-			if sed_err != nil {
+			sed, err := exec.Command("sed", "-i", "/    \""+software+"\":/,/    },/d", toolset_file).CombinedOutput()
+			if err != nil {
 				fmt.Println(string(sed))
-				log.Fatal(sed_err)
+				log.Fatal(err)
 			}
 		}
 	}
@@ -167,24 +172,24 @@ func add_software(template_file_rel string, local_dir string, git_dir string) {
 
 	for _, software := range add_software_list {
 		install_script := git_dir + "/images/ubuntu/scripts/build/install-" + software + ".sh"
-		if _, stat_script_err := os.Stat(install_script); stat_script_err == nil {
+		if _, err := os.Stat(install_script); err == nil {
 			fmt.Printf("    Install script for '%s' already exists.\n", software)
-			if _, cmp_scripts_err := exec.Command("cmp", "-s", local_dir+"/scripts/install-"+software+".sh", install_script).Output(); cmp_scripts_err == nil {
+			if _, err := exec.Command("cmp", "-s", local_dir+"/scripts/install-"+software+".sh", install_script).Output(); err == nil {
 				fmt.Printf("    Install script for '%s' is up-to-date.\n", software)
 			} else {
 				fmt.Printf("    Install script for '%s' is outdated, will update it.\n", software)
-				cp_script, cp_script_err := exec.Command("cp", local_dir+"/scripts/install-"+software+".sh", install_script).CombinedOutput()
-				if cp_script_err != nil {
+				cp_script, err := exec.Command("cp", local_dir+"/scripts/install-"+software+".sh", install_script).CombinedOutput()
+				if err != nil {
 					fmt.Println(string(cp_script))
-					log.Fatal(cp_script_err)
+					log.Fatal(err)
 				}
 			}
 		} else {
 			fmt.Printf("    Adding install script for '%s'...\n", software)
-			cp_script, cp_script_err := exec.Command("cp", local_dir+"/scripts/install-"+software+".sh", install_script).CombinedOutput()
-			if cp_script_err != nil {
+			cp_script, err := exec.Command("cp", local_dir+"/scripts/install-"+software+".sh", install_script).CombinedOutput()
+			if err != nil {
 				fmt.Println(string(cp_script))
-				log.Fatal(cp_script_err)
+				log.Fatal(err)
 			}
 		}
 
@@ -192,9 +197,9 @@ func add_software(template_file_rel string, local_dir string, git_dir string) {
 			fmt.Printf("    Line for '%s' already exists in Packer configuration.", software)
 		} else {
 			fmt.Printf("    Adding line to Packer configuration for '%s'...", software)
-			template_file_contents, template_file_contents_err := ioutil.ReadFile(template_file)
-			if template_file_contents_err != nil {
-				log.Fatal(template_file_contents_err)
+			template_file_contents, err := ioutil.ReadFile(template_file)
+			if err != nil {
+				log.Fatal(err)
 			}
 
 			template_file_lines := strings.Split(string(template_file_contents), "\n")
@@ -211,9 +216,9 @@ func add_software(template_file_rel string, local_dir string, git_dir string) {
 			}
 
 			template_file_output := strings.Join(template_file_lines, "\n")
-			write_err := ioutil.WriteFile(template_file, []byte(template_file_output), 0644)
-			if write_err != nil {
-				log.Fatal(write_err)
+			err_ := ioutil.WriteFile(template_file, []byte(template_file_output), 0644)
+			if err_ != nil {
+				log.Fatal(err_)
 			}
 		}
 	}
@@ -225,16 +230,16 @@ func add_software(template_file_rel string, local_dir string, git_dir string) {
 
 func validate_packer(template_file string) {
 	fmt.Println("Validating Packer configuration for '" + template_file + "'...")
-	packer_init, packer_init_err := exec.Command("packer", "init", template_file).CombinedOutput()
-	if packer_init_err != nil {
+	packer_init, err := exec.Command("packer", "init", template_file).CombinedOutput()
+	if err != nil {
 		fmt.Println(string(packer_init))
-		log.Fatal(packer_init_err)
+		log.Fatal(err)
 	}
 
-	packer_validate, packer_validate_err := exec.Command("packer", "validate", "-var", "managed_image_resource_group_name=test", "-var", "location=westeurope", template_file).CombinedOutput()
-	if packer_validate_err != nil {
+	packer_validate, err := exec.Command("packer", "validate", "-var", "managed_image_resource_group_name=test", "-var", "location=westeurope", template_file).CombinedOutput()
+	if err != nil {
 		fmt.Println(string(packer_validate))
-		log.Fatal(packer_validate_err)
+		log.Fatal(err)
 	}
 	fmt.Println("Done.\n")
 }
@@ -245,34 +250,35 @@ func apply_customizations(template_file string, local_dir string, git_dir string
 }
 
 func update(template_file string, local_dir string) {
-	tmp_dir, tmp_dir_err := ioutil.TempDir(os.TempDir(), "")
-	if tmp_dir_err != nil {
-		log.Fatal(tmp_dir_err)
+	tmp_dir, err := ioutil.TempDir(os.TempDir(), "")
+	if err != nil {
+		log.Fatal(err)
 	}
+
 	git_dir := tmp_dir + "/runner-images"
 	defer os.RemoveAll(tmp_dir)
 
 	fmt.Println("Cloning runner-images repository...")
-	clone, clone_err := exec.Command("git", "clone", "https://github.com/actions/runner-images.git", "-q", git_dir).CombinedOutput()
-	if clone_err != nil {
+	clone, err := exec.Command("git", "clone", "https://github.com/actions/runner-images.git", "-q", git_dir).CombinedOutput()
+	if err != nil {
 		fmt.Println(string(clone))
-		log.Fatal(clone_err)
+		log.Fatal(err)
 	}
-	wd, wd_err := os.Getwd()
-	if wd_err != nil {
-		log.Fatal(wd_err)
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
 	}
-	chdir_err := os.Chdir(git_dir)
-	if chdir_err != nil {
-		log.Fatal(chdir_err)
+	err_ := os.Chdir(git_dir)
+	if err_ != nil {
+		log.Fatal(err_)
 	}
 	fmt.Println("Done.\n")
 
 	fmt.Println("Getting latest ubuntu22 release...")
-	tags_list, tags_list_err := exec.Command("git", "tag").CombinedOutput()
-	if tags_list_err != nil {
+	tags_list, err := exec.Command("git", "tag").CombinedOutput()
+	if err != nil {
 		fmt.Println(string(tags_list))
-		log.Fatal(tags_list_err)
+		log.Fatal(err)
 	}
 	tags := strings.Split(string(tags_list), "\n")
 	latest_tag := ""
@@ -287,16 +293,14 @@ func update(template_file string, local_dir string) {
 	fmt.Println("Done.\n")
 
 	fmt.Println("Checking out latest tag '" + latest_tag + "'...")
-	// TODO: uncomment
-	// checkout, checkout_err := exec.Command("git", "checkout", latest_tag, "-q").CombinedOutput()
-	checkout, checkout_err := exec.Command("git", "checkout", "ubuntu22/20240514.2", "-q").CombinedOutput()
-	if checkout_err != nil {
+	checkout, err := exec.Command("git", "checkout", latest_tag, "-q").CombinedOutput()
+	if err != nil {
 		fmt.Println(string(checkout))
-		log.Fatal(checkout_err)
+		log.Fatal(err)
 	}
-	chdir_err = os.Chdir(wd)
-	if chdir_err != nil {
-		log.Fatal(chdir_err)
+	err = os.Chdir(wd)
+	if err != nil {
+		log.Fatal(err)
 	}
 	fmt.Println("Done.\n")
 
@@ -309,10 +313,10 @@ func update(template_file string, local_dir string) {
 
 	for _, file_dir := range files_dirs {
 		local_git_dir := local_dir + "/runner-images"
-		mkdir, mkdir_err := exec.Command("mkdir", "-p", local_git_dir+"/"+file_dir).CombinedOutput()
-		if mkdir_err != nil {
+		mkdir, err := exec.Command("mkdir", "-p", local_git_dir+"/"+file_dir).CombinedOutput()
+		if err != nil {
 			fmt.Println(string(mkdir))
-			log.Fatal(mkdir_err)
+			log.Fatal(err)
 		}
 		fmt.Printf("Checking differences in '%s'...\n", file_dir)
 		check_diff(file_dir, local_git_dir, git_dir)
@@ -324,9 +328,9 @@ func update(template_file string, local_dir string) {
 
 func main() {
 	template_file := "images/ubuntu/templates/ubuntu-22.04.pkr.hcl"
-	local_dir, local_dir_err := os.Getwd()
-	if local_dir_err != nil {
-		fmt.Println("Error: ", local_dir_err)
+	local_dir, err := os.Getwd()
+	if err != nil {
+		fmt.Println("Error: ", err)
 	}
 
 	if len(os.Args) > 1 && os.Args[1] == "--apply" {
