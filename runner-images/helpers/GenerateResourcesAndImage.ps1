@@ -1,5 +1,6 @@
 $ErrorActionPreference = 'Stop'
 
+
 enum ImageType {
     Windows2019   = 1
     Windows2022   = 2
