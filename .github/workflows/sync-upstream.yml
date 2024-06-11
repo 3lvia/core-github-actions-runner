@@ -68,13 +68,13 @@ jobs:
 
             ## ❓ What To Do
 
-            **1.** Confirm that the 'Generate image' workflow has passed, if not you can try to re-run it.
+            **1.** Confirm that the '**Generate image**' workflow has passed; if not you can try to re-run it.
             **2.** Review the changes in the Packer configuration file and check that they look sensible. Any changes to Markdown files can be ignored.
-            **3.** Go [here](https://github.com/3lvia/core-github-actions-templates/actions/workflows/test-actions.yml) and trigger the 'Test actions' workflow and select 'elvia-runner-dev' to test the new runner.
-            **4.** Once the 'Test actions' workflow has passed, you can merge this pull request.
-            **5.** After merging, the 'Generate image' workflow will run again and create a new image. You should confirm that this workflow passes too.
+            **3.** Go [here](https://github.com/3lvia/core-github-actions-templates/actions/workflows/test-actions.yml), click on '_Run workflow_' and select `elvia-runner-dev` as the runner. This will run the '**Test actions**' workflow using the new image.
+            **4.** Once the '**Test actions**' workflow has passed, you can merge this pull request.
+            **5.** After merging, the '**Generate image**' workflow will run again and create a new image. You should confirm that this workflow passes too.
 
-            Optionally, you can also run another 'Test actions' workflow using 'elvia-runner' after merging to confirm that the new image works as expected.
+            Optionally, you can also run another '**Test actions**' workflow using `elvia-runner` after merging to confirm that the new image works as expected.
             `;
 
             const team_reviewers = ['core-developer'];
