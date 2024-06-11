@@ -6,7 +6,7 @@ The image is generated in the GitHub workflow [generate-image.yml](.github/workf
 Packer will also publish the image to Azure.
 
 The Terraform code for the VM scale sets running the image is in the [core-terraform](https://github.com/3lvia/core-terraform) repository.
-The credentials for authenticating to Azure are stored in GitHub environment variables/secrets and are also configured in the core-terraform repository.
+The credentials for authenticating to Azure are stored in GitHub environment variables/secrets and are also configured in [core-terraform](https://github.com/3lvia/core-terraform).
 
 ## Updating the image
 
@@ -71,9 +71,9 @@ This is done in the [delete-runners.yml](.github/workflows/delete-runners.yml) w
 
 We use trunk-based development, and two environments `prod` and `dev`.
 Any pull request to the trunk branch `trunk` will generate and push an image to the `dev` environment.
-When merging to the `trunk` branch, the image will be pushed to the `prod` environment.
-In both cases, these images will be deployed to either the VMSS 'elvia-runner-dev' or the VMSS 'elvia-runner-prod', respectively.
+After merging to the `trunk` branch, the image will be pushed to the `prod` environment.
+In both cases, these images will be deployed to either the VMSS '**elvia-runner-dev**' or the VMSS '**elvia-runner-prod**', respectively.
 
 When testing, open a pull request to trunk and generate your image, which will be deployed to the `dev` environment.
 SSH access is enabled for the dev environment, so you can connect to the VM and test your changes.
-SSH access is configured in core-terraform, and you must provide your own public key.
+SSH access is configured in [core-terraform](https://github.com/3lvia/core-terraform), and you must provide your own public key.
