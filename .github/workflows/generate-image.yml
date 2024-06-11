@@ -4,14 +4,14 @@ on:
   push:
     branches: [trunk]
     paths:
-      - 'runner-images/*'
-      - 'scripts/*'
+      - 'runner-images/**'
+      - 'scripts/**'
       - '.github/workflows/generate-image.yml'
   pull_request:
     branches: [trunk]
     paths:
-      - 'runner-images/*'
-      - 'scripts/*'
+      - 'runner-images/**'
+      - 'scripts/**'
       - '.github/workflows/generate-image.yml'
 
 env:
