@@ -37,17 +37,19 @@ jobs:
           app-id: ${{ vars.GH_APP_ID }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
 
-      - name: Commit changes
+      - name: Commit changes and set branch name
         run: |
           if [[ -z "$(git status --porcelain)" ]]; then
             echo 'No changes to commit.'
             exit 0
           fi
 
+          branch_name="chore/update-image-$(date +%s)"
+          echo "BRANCH_NAME=$branch_name" >> $GITHUB_ENV
+
           git config user.email '${{ vars.GH_APP_USER_EMAIL }}'
           git config user.name '${{ vars.GH_APP_USERNAME }}'
 
-          branch_name="chore/update-image-$(date +%s)"
           git checkout -b "$branch_name"
           git add .
           git commit -m 'Update image'
@@ -56,13 +58,16 @@ jobs:
       - name: Create pull request
         uses: actions/github-script@v7
         with:
-          token: ${{ steps.app-token.outputs.token }}
+          github-token: ${{ steps.app-token.outputs.token }}
           script: |
+            const { owner, repo } = context.repo;
+
             const { data: pullRequest } = await github.rest.pulls.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
+              owner,
+              repo,
               title: 'Update image',
-              head: context.payload.pull_request.head.ref,
-              base: context.payload.pull_request.base.ref,
+              head: '${{ env.BRANCH_NAME }}',
+              base: 'trunk',
             })
+
             console.log(`Created pull request: ${pullRequest.html_url}`)
