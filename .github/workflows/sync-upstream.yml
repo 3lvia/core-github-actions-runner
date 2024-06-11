@@ -62,12 +62,39 @@ jobs:
           script: |
             const { owner, repo } = context.repo;
 
+            const body = `# ⬆️ Image update
+
+            This pull request updates the Packer configuration to the latest tag from [runner-images](https://github.com/actions/runner-images).
+
+            ## ❓ What To Do
+
+            **1.** Confirm that the 'Generate image' workflow has passed, if not you can try to re-run it.
+            **2.** Review the changes in the Packer configuration file and check that they look sensible. Any changes to Markdown files can be ignored.
+            **3.** Go [here](https://github.com/3lvia/core-github-actions-templates/actions/workflows/test-actions.yml) and trigger the 'Test actions' workflow and select 'elvia-runner-dev' to test the new runner.
+            **4.** Once the 'Test actions' workflow has passed, you can merge this pull request.
+            **5.** After merging, the 'Generate image' workflow will run again and create a new image. You should confirm that this workflow passes too.
+
+            Optionally, you can also run another 'Test actions' workflow using 'elvia-runner' after merging to confirm that the new image works as expected.
+            `;
+
+            const team_reviewers = ['core-developer'];
+
             const { data: pullRequest } = await github.rest.pulls.create({
               owner,
               repo,
               title: 'Update image',
               head: '${{ env.BRANCH_NAME }}',
               base: 'trunk',
+              body,
             })
 
             console.log(`Created pull request: ${pullRequest.html_url}`)
+
+            await github.rest.pulls.requestReviewers({
+              owner,
+              repo,
+              pull_number: pullRequest.number,
+              team_reviewers,
+            });
+
+            console.log(`Requested review from teams: ${team_reviewers.join(', ')}`)

@@ -80,10 +80,18 @@ jobs:
         run: |
           image_id=$(az image show -g '${{ vars.ARM_RESOURCE_GROUP }}' -n '${{ needs.generate-packer-image.outputs.image_name }}' --query id -o tsv)
           old_image_id=$(az vmss show -g '${{ vars.ARM_RESOURCE_GROUP }}' -n '${{ vars.VMSS_NAME }}' --query virtualMachineProfile.storageProfile.imageReference.id -o tsv)
+
+          echo "Updating image to $image_id..."
           az vmss update \
             --resource-group '${{ vars.ARM_RESOURCE_GROUP }}' \
             --name '${{ vars.VMSS_NAME }}' \
+            --output none \
             --set virtualMachineProfile.storageProfile.imageReference.id="$image_id"
           sleep 10
+          echo 'Done.'
+
+          echo "Deleting old image $old_image_id..."
           az image delete \
+            --output none \
             --ids "$old_image_id"
+          echo 'Done.'
