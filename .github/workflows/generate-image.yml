@@ -5,13 +5,13 @@ on:
     branches: [trunk]
     paths:
       - 'runner-images/**'
-      - 'scripts/**'
+      - 'install-scripts/**'
       - '.github/workflows/generate-image.yml'
   pull_request:
     branches: [trunk]
     paths:
       - 'runner-images/**'
-      - 'scripts/**'
+      - 'install-scripts/**'
       - '.github/workflows/generate-image.yml'
 
 env:

@@ -180,13 +180,15 @@ func add_software(template_file_rel string, local_dir string, git_dir string) {
 
 	for _, software := range add_software_list {
 		install_script := git_dir + "/images/ubuntu/scripts/build/install-" + software + ".sh"
+		local_install_script := local_dir + "/install-scripts/install-" + software + ".sh"
+
 		if _, err := os.Stat(install_script); err == nil {
 			fmt.Printf("    Install script for '%s' already exists.\n", software)
-			if _, err := exec.Command("cmp", "-s", local_dir+"/scripts/install-"+software+".sh", install_script).Output(); err == nil {
+			if _, err := exec.Command("cmp", "-s", local_install_script, install_script).Output(); err == nil {
 				fmt.Printf("    Install script for '%s' is up-to-date.\n", software)
 			} else {
 				fmt.Printf("    Install script for '%s' is outdated, will update it.\n", software)
-				cp_script, err := exec.Command("cp", local_dir+"/scripts/install-"+software+".sh", install_script).CombinedOutput()
+				cp_script, err := exec.Command("cp", local_install_script, install_script).CombinedOutput()
 				if err != nil {
 					fmt.Println(string(cp_script))
 					log.Fatal(err)
@@ -194,7 +196,7 @@ func add_software(template_file_rel string, local_dir string, git_dir string) {
 			}
 		} else {
 			fmt.Printf("    Adding install script for '%s'...\n", software)
-			cp_script, err := exec.Command("cp", local_dir+"/scripts/install-"+software+".sh", install_script).CombinedOutput()
+			cp_script, err := exec.Command("cp", local_install_script, install_script).CombinedOutput()
 			if err != nil {
 				fmt.Println(string(cp_script))
 				log.Fatal(err)

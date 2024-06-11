@@ -1,6 +1,6 @@
 # core-github-actions-runner
 
-Configuration for generating the OS images used by Elvias GitHub Actions runners, called 'elvia-runner'.
+Configuration for generating the OS images used by Elvias GitHub Actions runners, called '**elvia-runner**'.
 
 The image is generated in the GitHub workflow [generate-image.yml](.github/workflows/generate-image.yml) using Packer.
 Packer will also publish the image to Azure.
@@ -12,10 +12,12 @@ The credentials for authenticating to Azure are stored in GitHub environment var
 
 ### Syncing with upstream
 
-The configuration for the image is based on the GitHub [runner-images](https://github.com/actions/runner-images) repository.
-We have copied the configuration for the Ubuntu 22.04 image, and made some modifications.
+The configuration for the image is based on the [runner-images](https://github.com/actions/runner-images) repository (aka 'upstream').
+We use a [Go script](main.go) to apply our own modifications to the upstream configuration.
+All these changes are reproducible, meaning **no manual edits should be made to the configuration located at** `runner-images/`**!**
+This is because any manual changes would be overwritten later when we run the Go script to sync with the upstream repository.
 
-Syncing should be handled automatically by the GitHub workflow [sync-upstream.yml](.github/workflows/sync-upstream.yml).
+Syncing this repository with [runner-images](https://github.com/actions/runner-images) should be handled automatically by the GitHub workflow [sync-upstream.yml](.github/workflows/sync-upstream.yml).
 This workflow will run on a schedule and check for changes in the upstream repository, and create a pull request if necessary.
 The pull request should include a short guide on how to proceed with merging the changes.
 
@@ -45,8 +47,8 @@ You can double check by checking the git diff.
 
 To add software to the image, edit the `add_software_list` variable in [main.go](main.go).
 
-You will also need to supply an installation script in the [scripts](scripts) directory.
-See [scripts/install-trivy.sh](scripts/install-trivy.sh) for an example.
+You will also need to supply an installation script in the [install-scripts](install-scripts) directory.
+See [install-scripts/install-trivy.sh](install-scripts/install-trivy.sh) for an example.
 Your script **MUST** follow the same naming convention, i.e.: `install-<software>.sh`.
 
 As with removing software, run the following command:
