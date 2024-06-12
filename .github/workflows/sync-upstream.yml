@@ -69,7 +69,7 @@ jobs:
             ## ❓ What To Do
 
             **1.** Confirm that the '**Generate image**' workflow has passed; if not you can try to re-run it.
-            **2.** Review the changes in the Packer configuration file and check that they look sensible. Any changes to Markdown files can be ignored.
+            **2.** Review the changes in the Packer configuration files and check that they look sensible. Any changes to Markdown files can be ignored. You can also ignore any changes to files that belong to a different image version; we currently use \`ubuntu-22.04\`. This means you can ignore changes to \`ubuntu-20.04\` and \`ubuntu-24.04\` files.
             **3.** Go [here](https://github.com/3lvia/core-github-actions-templates/actions/workflows/test-actions.yml), click on '_Run workflow_' and select \`elvia-runner-dev\` as the runner. This will run the '**Test actions**' workflow using the new image.
             **4.** Once the '**Test actions**' workflow has passed, you can merge this pull request.
             **5.** After merging, the '**Generate image**' workflow will run again and create a new image. You should confirm that this workflow passes too.
