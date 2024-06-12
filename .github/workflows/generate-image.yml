@@ -17,6 +17,10 @@ on:
 env:
   IMAGE_TEMPLATE: './runner-images/images/ubuntu/templates/ubuntu-22.04.pkr.hcl'
 
+concurrency:
+  group: 'generate-image-${{ github.event_name }}'
+  cancel-in-progress: true
+
 jobs:
   generate-packer-image:
     name: 'Generate Packer image'
