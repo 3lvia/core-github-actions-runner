@@ -29,7 +29,7 @@ go run main.go
 
 Packer and git must be installed on your machine for this to work.
 
-### Remove software
+### Removing software
 
 We remove some software from the image to reduce build times.
 To remove software from the image, edit the `remove_software_list` variable in [main.go](main.go).
@@ -43,7 +43,7 @@ This should remove the required configuration from Packer and also remove the in
 Packer and git must be installed on your machine for this to work.
 You can double check by checking the git diff.
 
-### Add software
+### Adding software
 
 To add software to the image, edit the `add_software_list` variable in [main.go](main.go).
 
