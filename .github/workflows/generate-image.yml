@@ -19,7 +19,6 @@ env:
 
 concurrency:
   group: 'generate-image-${{ github.event_name }}'
-  cancel-in-progress: true
 
 jobs:
   generate-packer-image:
