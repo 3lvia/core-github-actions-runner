@@ -61,6 +61,18 @@ This should add the required configuration to Packer and copy the installation s
 Packer and git must be installed on your machine for this to work.
 You can double check by checking the git diff.
 
+### Unremoving or unadding software
+
+If you have previously removed or added software and want to revert the changes, you can run the following command:
+
+```bash
+go run main.go
+```
+
+This will clone a fresh copy of the upstream repository and try to reapply the changes.
+**If you are out of date with the upstream repository, this will also include any new (unrelated) changes.**
+It is recommended to sync with upstream using the above command if you are out of date, before trying to edit the `remove_software_list` or `add_software_list` variables.
+
 ## Deleting old runners
 
 When scaling the amount of VM instances, the VM's that get terminated will not be deregistered as GitHub runners.

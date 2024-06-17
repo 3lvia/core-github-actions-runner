@@ -7,8 +7,35 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"slices"
 	"strings"
 )
+
+var remove_software_list = []string{
+	"apache",
+	"aws-tools",
+	"gfortran",
+	"php",
+	"postgresql",
+	"pulumi",
+	"bazel",
+	"rust",
+	"julia",
+	"selenium",
+	"vcpkg",
+	"android-sdk",
+	"leiningen",
+	"kotlin",
+	"sbt",
+	"oc-cli",
+	"aliyun-cli",
+	"rlang",
+	"heroku",
+}
+
+var add_software_list = []string{
+	"trivy",
+}
 
 func check_diff(files_path string, local_git_dir string, git_dir string) {
 	os.Chdir(git_dir)
@@ -34,7 +61,24 @@ func check_diff(files_path string, local_git_dir string, git_dir string) {
 
 		local_git_dir_file := local_git_dir + "/" + file
 		if _, err := os.Stat(local_git_dir_file); errors.Is(err, os.ErrNotExist) {
-			fmt.Printf("File '%s' does not exist in local git directory.\n", file)
+			// Special case for install scripts
+			install_script_should_be_removed := slices.ContainsFunc(remove_software_list, func(s string) bool {
+				return strings.HasSuffix(file, "scripts/build/install-"+s+".sh")
+			})
+			if !install_script_should_be_removed {
+				fmt.Printf("File '%s' is not in the list of software to be removed; do you want to add it? [y/N]\n", file)
+				var REPLY string
+				fmt.Scanln(&REPLY)
+				if REPLY == "Y" || REPLY == "y" || os.Getenv("ACCEPT_ALL") == "true" {
+					cp, err := exec.Command("cp", git_dir+"/"+file, local_git_dir_file).CombinedOutput()
+					if err != nil {
+						fmt.Println(string(cp))
+						log.Fatal(err)
+					}
+				}
+			} else {
+				fmt.Printf("File '%s' does not exist in local git directory.\n", file)
+			}
 			continue
 		}
 
@@ -71,29 +115,6 @@ func check_diff(files_path string, local_git_dir string, git_dir string) {
 func remove_software(template_file_rel string, git_dir string) {
 	template_file := git_dir + "/" + template_file_rel
 	toolset_file := git_dir + "/images/ubuntu/toolsets/toolset-2204.json"
-	// Add software here to remove
-	remove_software_list := []string{
-		"apache",
-		"aws-tools",
-		"gfortran",
-		"java-tools",
-		"php",
-		"postgresql",
-		"pulumi",
-		"bazel",
-		"rust",
-		"julia",
-		"selenium",
-		"vcpkg",
-		"android-sdk",
-		"leiningen",
-		"kotlin",
-		"sbt",
-		"oc-cli",
-		"aliyun-cli",
-		"rlang",
-		"heroku",
-	}
 
 	fmt.Println("Disabling software report generation...")
 
@@ -171,10 +192,6 @@ func remove_software(template_file_rel string, git_dir string) {
 
 func add_software(template_file_rel string, local_dir string, git_dir string) {
 	template_file := git_dir + "/" + template_file_rel
-	// Add software here to add
-	add_software_list := []string{
-		"trivy",
-	}
 
 	fmt.Println("Adding software...")
 
