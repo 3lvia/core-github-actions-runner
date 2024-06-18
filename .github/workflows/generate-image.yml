@@ -76,6 +76,9 @@ jobs:
     environment: ${{ github.event_name == 'push' && 'prod' || 'dev' }}
     needs: [generate-packer-image]
     steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+
       - name: Login to Azure CLI
         uses: azure/login@v2
         with:
