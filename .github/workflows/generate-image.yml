@@ -7,12 +7,14 @@ on:
       - 'runner-images/**'
       - 'install-scripts/**'
       - '.github/workflows/generate-image.yml'
+      - 'update-vmss-image.sh'
   pull_request:
     branches: [trunk]
     paths:
       - 'runner-images/**'
       - 'install-scripts/**'
       - '.github/workflows/generate-image.yml'
+      - 'update-vmss-image.sh'
 
 env:
   IMAGE_TEMPLATE: './runner-images/images/ubuntu/templates/ubuntu-22.04.pkr.hcl'
