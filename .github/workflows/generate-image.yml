@@ -7,12 +7,14 @@ on:
       - 'runner-images/**'
       - 'install-scripts/**'
       - '.github/workflows/generate-image.yml'
+      - 'update-vmss-image.sh'
   pull_request:
     branches: [trunk]
     paths:
       - 'runner-images/**'
       - 'install-scripts/**'
       - '.github/workflows/generate-image.yml'
+      - 'update-vmss-image.sh'
 
 env:
   IMAGE_TEMPLATE: './runner-images/images/ubuntu/templates/ubuntu-22.04.pkr.hcl'
@@ -74,27 +76,16 @@ jobs:
     environment: ${{ github.event_name == 'push' && 'prod' || 'dev' }}
     needs: [generate-packer-image]
     steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+
       - name: Login to Azure CLI
         uses: azure/login@v2
         with:
           creds: '{"clientId":"${{ vars.ARM_CLIENT_ID }}","clientSecret":"${{ secrets.ARM_CLIENT_SECRET }}","subscriptionId":"${{ vars.ARM_SUBSCRIPTION_ID }}","tenantId":"${{ vars.ARM_TENANT_ID }}"}'
 
-      - name: Update VMSS with new image and delete old image
-        run: |
-          image_id=$(az image show -g '${{ vars.ARM_RESOURCE_GROUP }}' -n '${{ needs.generate-packer-image.outputs.image_name }}' --query id -o tsv)
-          old_image_id=$(az vmss show -g '${{ vars.ARM_RESOURCE_GROUP }}' -n '${{ vars.VMSS_NAME }}' --query virtualMachineProfile.storageProfile.imageReference.id -o tsv)
-
-          echo "Updating image to $image_id..."
-          az vmss update \
-            --resource-group '${{ vars.ARM_RESOURCE_GROUP }}' \
-            --name '${{ vars.VMSS_NAME }}' \
-            --output none \
-            --set virtualMachineProfile.storageProfile.imageReference.id="$image_id"
-          sleep 10
-          echo 'Done.'
-
-          echo "Deleting old image $old_image_id..."
-          az image delete \
-            --output none \
-            --ids "$old_image_id"
-          echo 'Done.'
+      - name: Update every VMSS with new image and delete old image
+        run: ./update-vmss-image.sh
+        env:
+          IMAGE_NAME: ${{ needs.generate-packer-image.outputs.image_name }}
+          ARM_RESOURCE_GROUP: ${{ vars.ARM_RESOURCE_GROUP }}

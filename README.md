@@ -1,6 +1,6 @@
 # core-github-actions-runner
 
-Configuration for generating the OS images used by Elvias GitHub Actions runners, called '**elvia-runner**'.
+Configuration for generating the OS images used by Elvias GitHub Actions runners.
 
 The image is generated in the GitHub workflow [generate-image.yml](.github/workflows/generate-image.yml) using Packer.
 Packer will also publish the image to Azure.
@@ -27,7 +27,7 @@ If you want to manually sync with the upstream repository, you can run the follo
 go run main.go
 ```
 
-Packer and git must be installed on your machine for this to work.
+Go, Packer and git must be installed on your machine for this to work.
 
 ### Removing software
 
@@ -40,7 +40,6 @@ go run main.go --apply
 ```
 
 This should remove the required configuration from Packer and also remove the installation script.
-Packer and git must be installed on your machine for this to work.
 You can double check by checking the git diff.
 
 ### Adding software
@@ -58,7 +57,6 @@ go run main.go --apply
 ```
 
 This should add the required configuration to Packer and copy the installation script to the correct location.
-Packer and git must be installed on your machine for this to work.
 You can double check by checking the git diff.
 
 ### Unremoving or unadding software
@@ -84,9 +82,9 @@ This is done in the [delete-runners.yml](.github/workflows/delete-runners.yml) w
 ## Development
 
 We use trunk-based development, and two environments `prod` and `dev`.
-Any pull request to the trunk branch `trunk` will generate and push an image to the `dev` environment.
+Any pull request to the `trunk` branch will generate and push an image to the `dev` environment.
 After merging to the `trunk` branch, the image will be pushed to the `prod` environment.
-In both cases, these images will be deployed to either the VMSS '**elvia-runner-dev**' or the VMSS '**elvia-runner-prod**', respectively.
+In both cases, these images will be deployed to any VMSS (in the Core resource groups) with the tag `used-by: github-actions` in either `dev` or `prod`.
 
 When testing, open a pull request to trunk and generate your image, which will be deployed to the `dev` environment.
 SSH access is enabled for the dev environment, so you can connect to the VM and test your changes.
