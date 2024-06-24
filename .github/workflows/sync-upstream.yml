@@ -45,7 +45,7 @@ jobs:
             exit 0
           fi
 
-          branch_name="chore/update-image-$(date +%s)"
+          branch_name="chore/update-runner-image-$(date +%s)"
           echo "BRANCH_NAME=$branch_name" >> $GITHUB_ENV
 
           git config user.email '${{ vars.GH_APP_USER_EMAIL }}'
@@ -53,7 +53,7 @@ jobs:
 
           git checkout -b "$branch_name"
           git add .
-          git commit -m 'Update image'
+          git commit -m 'Update runner image'
           git push -u origin "$branch_name"
 
       - name: Create pull request
@@ -63,8 +63,9 @@ jobs:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
             const { owner, repo } = context.repo;
+            const title = '⬆️ Runner image update';
 
-            const body = `# ⬆️ Image update
+            const body = `${title}
 
             This pull request updates the Packer configuration to the latest tag from [runner-images](https://github.com/actions/runner-images).
 
@@ -84,7 +85,7 @@ jobs:
             const { data: pullRequest } = await github.rest.pulls.create({
               owner,
               repo,
-              title: 'Update image',
+              title,
               head: '${{ env.BRANCH_NAME }}',
               base: 'trunk',
               body,
