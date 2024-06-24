@@ -32,7 +32,7 @@ Go, Packer and git must be installed on your machine for this to work.
 ### Removing software
 
 We remove some software from the image to reduce build times.
-To remove software from the image, edit the `remove_software_list` variable in [main.go](main.go).
+To remove software from the image, edit the `removeSoftwareList` variable in [main.go](main.go).
 After editing the file, run the following command:
 
 ```bash
@@ -44,7 +44,7 @@ You can double check by checking the git diff.
 
 ### Adding software
 
-To add software to the image, edit the `add_software_list` variable in [main.go](main.go).
+To add software to the image, edit the `addSoftwareList` variable in [main.go](main.go).
 
 You will also need to supply an installation script in the [install-scripts](install-scripts) directory.
 See [install-scripts/install-trivy.sh](install-scripts/install-trivy.sh) for an example.
@@ -69,7 +69,7 @@ go run main.go
 
 This will clone a fresh copy of the upstream repository and try to reapply the changes.
 **If you are out of date with the upstream repository, this will also include any new (unrelated) changes.**
-It is recommended to sync with upstream using the above command if you are out of date, before trying to edit the `remove_software_list` or `add_software_list` variables.
+It is recommended to sync with upstream using the above command if you are out of date, before trying to edit the `removeSoftwareList` or `addSoftwareList` variables.
 
 ## Deleting old runners
 
