@@ -1,0 +1,26 @@
+name: Test update script
+
+on:
+  push:
+    branches: [trunk]
+  pull_request:
+    branches: [trunk]
+
+jobs:
+  test-update-script:
+    name: 'Test update script'
+    runs-on: elvia-runner
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Go
+      uses: actions/setup-go@v5
+
+    - name: Setup Packer
+      uses: hashicorp/setup-packer@v3
+
+    - name: Run update script
+      run: go run main.go
+      env:
+        ACCEPT_ALL: 'true'
