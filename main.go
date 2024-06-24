@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -135,14 +134,14 @@ func removeSoftware(templateFilRelative string, gitDir string) {
     source      = "${var.image_folder}/software-report.json"
   }`
 
-	templateFileContentsBytes, err := ioutil.ReadFile(templateFile)
+	templateFileContentsBytes, err := os.ReadFile(templateFile)
 	if err != nil {
 		log.Fatal(err)
 	}
 	templateFileContents := string(templateFileContentsBytes)
 
 	templateFileNewContents := strings.Replace(templateFileContents, softwareGenBlock, "", 1)
-	err_ := ioutil.WriteFile(templateFile, []byte(templateFileNewContents), 0644)
+	err_ := os.WriteFile(templateFile, []byte(templateFileNewContents), 0644)
 	if err_ != nil {
 		log.Fatal(err_)
 	}
@@ -170,7 +169,7 @@ func removeSoftware(templateFilRelative string, gitDir string) {
 			software = "android"
 		}
 
-		toolsetFileContentsBytes, err := ioutil.ReadFile(toolsetFile)
+		toolsetFileContentsBytes, err := os.ReadFile(toolsetFile)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -220,7 +219,7 @@ func addSoftware(templateFileRelative string, localDir string, gitDir string) {
 			}
 		}
 
-		templateFileContentsBytes, err := ioutil.ReadFile(templateFile)
+		templateFileContentsBytes, err := os.ReadFile(templateFile)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -252,7 +251,7 @@ func addSoftware(templateFileRelative string, localDir string, gitDir string) {
 			}
 
 			templateFileOutput := strings.Join(templateFileLines, "\n")
-			err_ := ioutil.WriteFile(templateFile, []byte(templateFileOutput), 0644)
+			err_ := os.WriteFile(templateFile, []byte(templateFileOutput), 0644)
 			if err_ != nil {
 				log.Fatal(err_)
 			}
@@ -286,7 +285,7 @@ func applyCustomizations(templateFile string, localDir string, gitDir string) {
 }
 
 func update(templateFile string, localDir string) {
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "")
+	tmpDir, err := os.MkdirTemp(os.TempDir(), "")
 	if err != nil {
 		log.Fatal(err)
 	}
