@@ -145,7 +145,7 @@ func removeSoftware(templateFilRelative string, gitDir string) {
 	if err_ != nil {
 		log.Fatal(err_)
 	}
-	fmt.Println("Done.\n")
+	fmt.Printf("Done.\n\n")
 
 	fmt.Println("Removing software...")
 
@@ -185,7 +185,7 @@ func removeSoftware(templateFilRelative string, gitDir string) {
 		}
 	}
 
-	fmt.Println("Done.\n")
+	fmt.Printf("Done.\n\n")
 	validatePacker(templateFile)
 }
 
@@ -258,7 +258,7 @@ func addSoftware(templateFileRelative string, localDir string, gitDir string) {
 		}
 	}
 
-	fmt.Println("\nDone.\n")
+	fmt.Printf("\nDone.\n\n")
 
 	validatePacker(templateFile)
 }
@@ -276,7 +276,7 @@ func validatePacker(templateFile string) {
 		fmt.Println(string(packerValidate))
 		log.Fatal(err)
 	}
-	fmt.Println("Done.\n")
+	fmt.Printf("Done.\n\n")
 }
 
 func applyCustomizations(templateFile string, localDir string, gitDir string) {
@@ -307,7 +307,7 @@ func update(templateFile string, localDir string) {
 	if err_ != nil {
 		log.Fatal(err_)
 	}
-	fmt.Println("Done.\n")
+	fmt.Printf("Done.\n\n")
 
 	fmt.Println("Getting latest ubuntu22 release...")
 	tagsList, err := exec.Command("git", "tag").CombinedOutput()
@@ -325,7 +325,7 @@ func update(templateFile string, localDir string) {
 	if latestTag == "" {
 		log.Fatal("No ubuntu22 tag found.")
 	}
-	fmt.Println("Done.\n")
+	fmt.Printf("Done.\n\n")
 
 	fmt.Println("Checking out latest tag '" + latestTag + "'...")
 	checkout, err := exec.Command("git", "checkout", latestTag, "-q").CombinedOutput()
@@ -337,7 +337,7 @@ func update(templateFile string, localDir string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Done.\n")
+	fmt.Printf("Done.\n\n")
 
 	applyCustomizations(templateFile, localDir, gitDir)
 
@@ -355,7 +355,7 @@ func update(templateFile string, localDir string) {
 		}
 		fmt.Printf("Checking differences in '%s'...\n", fileDir)
 		checkDiff(fileDir, localGitDir, gitDir)
-		fmt.Println("Done.\n")
+		fmt.Printf("Done.\n\n")
 	}
 
 	validatePacker(localDir + "/runner-images/" + templateFile)
