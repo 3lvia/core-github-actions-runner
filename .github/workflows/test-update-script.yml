@@ -9,7 +9,7 @@ on:
 jobs:
   test-update-script:
     name: 'Test update script'
-    runs-on: elvia-runner
+    runs-on: elvia-runner-v2-dev
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
