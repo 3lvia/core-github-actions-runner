@@ -34,6 +34,7 @@ var removeSoftwareList = []string{
 
 var addSoftwareList = []string{
 	"trivy",
+	"github-runner",
 }
 
 func checkDiff(filesPath string, localGitDir string, gitDir string) {
@@ -47,7 +48,7 @@ func checkDiff(filesPath string, localGitDir string, gitDir string) {
 	files := string(filesByte)
 
 	if files == "" {
-		fmt.Println("No files found.")
+		fmt.Println("  No files found.")
 		return
 	}
 
@@ -76,14 +77,14 @@ func checkDiff(filesPath string, localGitDir string, gitDir string) {
 					}
 				}
 			} else {
-				fmt.Printf("File '%s' does not exist in local git directory.\n", file)
+				fmt.Printf("  File '%s' does not exist in local git directory.\n", file)
 			}
 			continue
 		}
 
 		gitDirFile := gitDir + "/" + file
 		if _, err := os.Stat(gitDirFile); errors.Is(err, os.ErrNotExist) {
-			fmt.Printf("File '%s' does not exist in git temp directory.\n", file)
+			fmt.Printf("  File '%s' does not exist in git temp directory.\n", file)
 			continue
 		}
 
@@ -106,7 +107,7 @@ func checkDiff(filesPath string, localGitDir string, gitDir string) {
 				}
 			}
 		} else {
-			fmt.Printf("No changes in '%s'.\n", file)
+			fmt.Printf("  No changes in '%s'.\n", file)
 		}
 	}
 }
@@ -186,7 +187,6 @@ func removeSoftware(templateFilRelative string, gitDir string) {
 	}
 
 	fmt.Printf("Done.\n\n")
-	validatePacker(templateFile)
 }
 
 func addSoftware(templateFileRelative string, localDir string, gitDir string) {
@@ -195,28 +195,9 @@ func addSoftware(templateFileRelative string, localDir string, gitDir string) {
 	fmt.Println("Adding software...")
 
 	for _, software := range addSoftwareList {
-		installScript := gitDir + "/images/ubuntu/scripts/build/install-" + software + ".sh"
-		localInstallScript := localDir + "/install-scripts/install-" + software + ".sh"
-
-		if _, err := os.Stat(installScript); err == nil {
-			fmt.Printf("    Install script for '%s' already exists.\n", software)
-			if _, err := exec.Command("cmp", "-s", localInstallScript, installScript).Output(); err == nil {
-				fmt.Printf("    Install script for '%s' is up-to-date.\n", software)
-			} else {
-				fmt.Printf("    Install script for '%s' is outdated, will update it.\n", software)
-				cpScript, err := exec.Command("cp", localInstallScript, installScript).CombinedOutput()
-				if err != nil {
-					fmt.Println(string(cpScript))
-					log.Fatal(err)
-				}
-			}
-		} else {
-			fmt.Printf("    Adding install script for '%s'...\n", software)
-			cpScript, err := exec.Command("cp", localInstallScript, installScript).CombinedOutput()
-			if err != nil {
-				fmt.Println(string(cpScript))
-				log.Fatal(err)
-			}
+		err := copyScript(localDir, gitDir, "install-"+software+".sh")
+		if err != nil {
+			log.Fatal(err)
 		}
 
 		templateFileContentsBytes, err := os.ReadFile(templateFile)
@@ -259,8 +240,42 @@ func addSoftware(templateFileRelative string, localDir string, gitDir string) {
 	}
 
 	fmt.Printf("\nDone.\n\n")
+}
 
-	validatePacker(templateFile)
+func copyScript(localDir string, gitDir string, scriptName string) error {
+	script := gitDir + "/images/ubuntu/scripts/build/" + scriptName
+	localScript := localDir + "/scripts/" + scriptName
+
+	if _, err := os.Stat(script); err == nil {
+		fmt.Printf("    Install script '%s' already exists.\n", scriptName)
+		if _, err := exec.Command("cmp", "-s", localScript, script).Output(); err == nil {
+			fmt.Printf("    Install script '%s' is up-to-date.\n", scriptName)
+		} else {
+			fmt.Printf("    Install script '%s' is outdated, will update it.\n", scriptName)
+			cpScript, err := exec.Command("cp", localScript, script).CombinedOutput()
+			if err != nil {
+				return fmt.Errorf(
+					"Error copying install script '%s' to '%s': %s",
+					localScript,
+					script,
+					cpScript,
+				)
+			}
+		}
+	} else {
+		fmt.Printf("    Adding install script '%s'...\n", script)
+		cpScript, err := exec.Command("cp", localScript, script).CombinedOutput()
+		if err != nil {
+			return fmt.Errorf(
+				"Error copying install script '%s' to '%s': %s",
+				localScript,
+				script,
+				cpScript,
+			)
+		}
+	}
+
+	return nil
 }
 
 func validatePacker(templateFile string) {
@@ -371,6 +386,7 @@ func main() {
 	if len(os.Args) > 1 && os.Args[1] == "--apply" {
 		gitDir := localDir + "/runner-images"
 		applyCustomizations(templateFile, localDir, gitDir)
+		validatePacker(localDir + "/runner-images/" + templateFile)
 	} else {
 		update(templateFile, localDir)
 	}
