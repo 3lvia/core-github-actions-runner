@@ -46,8 +46,8 @@ You can double check by checking the git diff.
 
 To add software to the image, edit the `addSoftwareList` variable in [main.go](main.go).
 
-You will also need to supply an installation script in the [install-scripts](install-scripts) directory.
-See [install-scripts/install-trivy.sh](install-scripts/install-trivy.sh) for an example.
+You will also need to supply an installation script in the [scripts](scripts) directory.
+See [scripts/install-trivy.sh](scripts/install-trivy.sh) for an example.
 Your script **MUST** follow the same naming convention, i.e.: `install-<software>.sh`.
 
 As with removing software, run the following command:
