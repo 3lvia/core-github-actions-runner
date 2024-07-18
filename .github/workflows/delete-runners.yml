@@ -32,10 +32,10 @@ jobs:
               org,
             });
 
-            for (const { id: runner_id, status, name } of runners.data.runners) {
-              if (status === 'offline' && name.startsWith('elvia-runner-')) {
+            for (const { id: runner_id, status, name, busy } of runners.data.runners) {
+              if (status === 'offline' && name.startsWith('elvia-runner-') && !busy) {
                 console.log(
-                  `Runner with id ${runner_id} and name ${name} has status ${status}. Deleting...`,
+                  `Runner with id ${runner_id} and name ${name} has status ${status} and is not busy. Deleting...`,
                 );
                 await github.rest.actions.deleteSelfHostedRunnerFromOrg({
                   org,
