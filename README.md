@@ -71,14 +71,6 @@ This will clone a fresh copy of the upstream repository and try to reapply the c
 **If you are out of date with the upstream repository, this will also include any new (unrelated) changes.**
 It is recommended to sync with upstream using the above command if you are out of date, before trying to edit the `removeSoftwareList` or `addSoftwareList` variables.
 
-## Deleting old runners
-
-When scaling the amount of VM instances, the VM's that get terminated will not be deregistered as GitHub runners.
-This means that they will still show up in the list of runners in the organizations settings, but will be permanently 'offline'.
-When registering new runners, they will usually replace the old ones since the hostname is the same.
-However, this is not always the case. Therefore, we have a workflow that will delete all runners that are offline.
-This is done in the [delete-runners.yml](.github/workflows/delete-runners.yml) workflow.
-
 ## Development
 
 We use trunk-based development, and two environments `prod` and `dev`.
