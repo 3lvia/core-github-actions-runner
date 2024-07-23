@@ -17,6 +17,7 @@ on:
       - 'update-vmss-image.sh'
 
 env:
+  IMAGE_PREFIX: 'elvia-runner'
   IMAGE_TEMPLATE: './runner-images/images/ubuntu/templates/ubuntu-22.04.pkr.hcl'
 
 concurrency:
@@ -39,7 +40,7 @@ jobs:
       - name: Set environment variables and outputs
         id: set-env
         run: |
-          echo "image_name=elvia-runner-$(date +%s)" >> "$GITHUB_OUTPUT"
+          echo "image_name=${{ env.IMAGE_PREFIX }}-$(date +%s)" >> "$GITHUB_OUTPUT"
           echo "TEMP_RESOURCE_GROUP_NAME=packer-build-delete-me-$RANDOM$RANDOM" >> "$GITHUB_ENV"
 
       - name: Build image and publish to Azure
@@ -70,22 +71,27 @@ jobs:
             --force-deletion-types Microsoft.Compute/virtualMachines \
             --yes || true
 
-  update-vmss-image:
-    name: 'Update VMSS image'
+  delete-old-image:
+    name: 'Delete old image'
     runs-on: ubuntu-latest # We don't use Elvia runner to avoid race conditions
     environment: ${{ github.event_name == 'push' && 'prod' || 'dev' }}
     needs: [generate-packer-image]
     steps:
-      - name: Clone repository
-        uses: actions/checkout@v4
-
       - name: Login to Azure CLI
         uses: azure/login@v2
         with:
           creds: '{"clientId":"${{ vars.ARM_CLIENT_ID }}","clientSecret":"${{ secrets.ARM_CLIENT_SECRET }}","subscriptionId":"${{ vars.ARM_SUBSCRIPTION_ID }}","tenantId":"${{ vars.ARM_TENANT_ID }}"}'
 
-      - name: Update every VMSS with new image and delete old image
-        run: ./update-vmss-image.sh
-        env:
-          IMAGE_NAME: ${{ needs.generate-packer-image.outputs.image_name }}
-          ARM_RESOURCE_GROUP: ${{ vars.ARM_RESOURCE_GROUP }}
+      - name: Delete old image
+        run: |
+          old_image_id=$(az image list --query "[?(starts_with(name, '${{ env.IMAGE_PREFIX }}') && name != '${{ needs.generate-packer-image.outputs.image_name }}')] | [].id" -o tsv)
+          if [[ -z "$old_image_id" ]]; then
+            echo 'No old image found.'
+            exit 0
+          fi
+
+          echo "Deleting old image $old_image_id..."
+          az image delete \
+            --output none \
+            --ids "$old_image_id"
+          echo 'Done.'
