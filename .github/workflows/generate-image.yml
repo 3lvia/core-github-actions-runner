@@ -26,7 +26,7 @@ concurrency:
 jobs:
   generate-packer-image:
     name: 'Generate Packer image'
-    runs-on: ubuntu-latest # We don't use Elvia runner to avoid race conditions
+    runs-on: ubuntu-latest # We don't use Elvia runner to avoid conflicts
     environment: ${{ github.event_name == 'push' && 'prod' || 'dev' }}
     outputs:
       image_name: ${{ steps.set-env.outputs.image_name }}
@@ -71,9 +71,19 @@ jobs:
             --force-deletion-types Microsoft.Compute/virtualMachines \
             --yes || true
 
+      - name: Send Slack notification on failure
+        if: failure()
+        uses: 3lvia/core-github-actions-templates/slack-message@trunk
+        with:
+          slack-channel: '#team-core-alerts'
+          message: |
+            :warning: Packer image build failed when building image ${{ steps.set-env.outputs.image_name }}
+            :link: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          slack-api-token: ${{ secrets.SLACK_API_TOKEN }}
+
   delete-old-image:
     name: 'Delete old image'
-    runs-on: ubuntu-latest # We don't use Elvia runner to avoid race conditions
+    runs-on: ubuntu-latest # We don't use Elvia runner to avoid conflicts
     environment: ${{ github.event_name == 'push' && 'prod' || 'dev' }}
     needs: [generate-packer-image]
     steps:
@@ -84,14 +94,16 @@ jobs:
 
       - name: Delete old image
         run: |
-          old_image_id=$(az image list --query "[?(starts_with(name, '${{ env.IMAGE_PREFIX }}') && name != '${{ needs.generate-packer-image.outputs.image_name }}')] | [].id" -o tsv)
-          if [[ -z "$old_image_id" ]]; then
-            echo 'No old image found.'
+          old_image_ids=$(az image list --query "[?(starts_with(name, '${{ env.IMAGE_PREFIX }}') && name != '${{ needs.generate-packer-image.outputs.image_name }}')] | [].id" -o tsv)
+          if [[ -z "$old_image_ids" ]]; then
+            echo 'No old images found.'
             exit 0
           fi
 
-          echo "Deleting old image $old_image_id..."
-          az image delete \
-            --output none \
-            --ids "$old_image_id"
-          echo 'Done.'
+          for old_image_id in $old_image_ids; do
+            echo "Deleting old image $old_image_id..."
+            az image delete \
+              --output none \
+              --ids "$old_image_id"
+            echo 'Done.'
+          done
