@@ -5,16 +5,14 @@ on:
     branches: [trunk]
     paths:
       - 'runner-images/**'
-      - 'install-scripts/**'
+      - 'scripts/**'
       - '.github/workflows/generate-image.yml'
-      - 'update-vmss-image.sh'
   pull_request:
     branches: [trunk]
     paths:
       - 'runner-images/**'
-      - 'install-scripts/**'
+      - 'scripts/**'
       - '.github/workflows/generate-image.yml'
-      - 'update-vmss-image.sh'
   schedule:
     - cron: '54 3 * * 2' # every Tuesday at 03:54
   workflow_dispatch:
