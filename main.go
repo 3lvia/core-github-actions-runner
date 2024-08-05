@@ -71,13 +71,17 @@ func checkDiff(filesPath string, localGitDir string, gitDir string) {
 			})
 			if !installScriptShouldBeRemoved {
 				fmt.Printf("File '%s' is not in the list of software to be removed; do you want to add it? [y/N]\n", file)
+				acceptAll := os.Getenv("ACCEPT_ALL") == "true"
+
 				var REPLY string
-				_, err := fmt.Scanln(&REPLY)
-				if err != nil {
-					log.Fatal(err)
+				if !acceptAll {
+					_, err := fmt.Scanln(&REPLY)
+					if err != nil {
+						log.Fatal(err)
+					}
 				}
 
-				if REPLY == "Y" || REPLY == "y" || os.Getenv("ACCEPT_ALL") == "true" {
+				if acceptAll || REPLY == "Y" || REPLY == "y" {
 					cp, err := exec.Command("cp", gitDir+"/"+file, localGitDirFile).CombinedOutput()
 					if err != nil {
 						fmt.Println(string(cp))
@@ -106,13 +110,17 @@ func checkDiff(filesPath string, localGitDir string, gitDir string) {
 			fmt.Printf("\n\n")
 			fmt.Println("Do you want to apply these changes to " + file + "? [y/N]\n")
 
+			acceptAll := os.Getenv("ACCEPT_ALL") == "true"
+
 			var REPLY string
-			_, err := fmt.Scanln(&REPLY)
-			if err != nil {
-				log.Fatal(err)
+			if !acceptAll {
+				_, err := fmt.Scanln(&REPLY)
+				if err != nil {
+					log.Fatal(err)
+				}
 			}
 
-			if REPLY == "Y" || REPLY == "y" || os.Getenv("ACCEPT_ALL") == "true" {
+			if acceptAll || REPLY == "Y" || REPLY == "y" {
 				cp, err := exec.Command("cp", gitDirFile, localGitDirFile).CombinedOutput()
 				if err != nil {
 					fmt.Println(string(cp))
