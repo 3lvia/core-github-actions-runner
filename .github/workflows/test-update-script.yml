@@ -22,6 +22,17 @@ jobs:
     - name: Setup Packer
       uses: hashicorp/setup-packer@v3
 
+    - name: Run update script apply
+      run: |
+        go run main.go --apply
+        if [[ -n "$(git status --porcelain)" ]]; then
+          echo '## :warning: Changes detected' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Please run `go run main.go --apply` and commit the changes.' >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+        fi
+      env:
+        ACCEPT_ALL: 'true'
+
     - name: Run update script
       run: go run main.go
       env:
