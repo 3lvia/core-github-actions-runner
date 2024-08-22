@@ -29,7 +29,7 @@ jobs:
   generate-packer-image:
     name: 'Generate Packer image'
     runs-on: ubuntu-latest # We don't use Elvia runner to avoid conflicts
-    environment: ${{ github.event_name == 'push' && 'prod' || 'dev' }}
+    environment: ${{ github.event_name == 'pull_request' && 'dev' || 'prod' }}
     outputs:
       image_name: ${{ steps.set-env.outputs.image_name }}
     steps:
@@ -87,7 +87,7 @@ jobs:
   delete-old-image:
     name: 'Delete old image'
     runs-on: ubuntu-latest # We don't use Elvia runner to avoid conflicts
-    environment: ${{ github.event_name == 'push' && 'prod' || 'dev' }}
+    environment: ${{ github.event_name == 'pull_request' && 'dev' || 'prod' }}
     needs: [generate-packer-image]
     steps:
       - name: Login to Azure CLI
