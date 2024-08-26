@@ -36,6 +36,7 @@ var addSoftwareList = []string{
 	"trivy",
 	"github-runner",
 	"playwright-dependencies",
+	"golangci-lint",
 }
 
 func checkDiff(filesPath string, localGitDir string, gitDir string) {
