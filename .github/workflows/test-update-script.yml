@@ -33,6 +33,31 @@ jobs:
       env:
         ACCEPT_ALL: 'true'
 
+    - name: Get GitHub App token for repository
+      if: failure()
+      uses: actions/create-github-app-token@v1
+      id: app-token
+      with:
+        app-id: ${{ vars.GH_APP_ID }}
+        private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+
+    - name: Post GitHub comment
+      if: failure()
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ steps.app-token.outputs.token }}
+        script: |
+          const body = `## :warning: Changes detected
+          Please run \`go run main.go --apply\` and commit the changes.
+          `;
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body,
+          });
+
     - name: Run update script
       run: go run main.go
       env:
