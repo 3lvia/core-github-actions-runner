@@ -12,3 +12,7 @@ download_url=$(resolve_github_release_asset_url "aquasecurity/trivy" "contains(\
 archive_path=$(download_with_retry "$download_url")
 
 tar -xzf "$archive_path" -C '/usr/local/bin' trivy
+
+# Download Trivy DB's
+trivy image --download-db-only
+trivy image --download-java-db-only
