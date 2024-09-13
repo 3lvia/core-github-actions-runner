@@ -1,6 +1,6 @@
 # core-github-actions-runner
 
-Configuration for generating the OS images used by Elvias GitHub Actions runners.
+Configuration for generating the OS images used by Elvias self-hoted GitHub Actions runners.
 
 The image is generated in the GitHub workflow [generate-image.yml](.github/workflows/generate-image.yml) using Packer.
 Packer will also publish the image to Azure.
@@ -56,8 +56,9 @@ You can double check by checking the git diff.
 To add software to the image, edit the `addSoftwareList` variable in [main.go](main.go).
 
 You will also need to supply an installation script in the [scripts](scripts) directory.
+This script should contain the necessary commands to install the software.
 See [scripts/install-trivy.sh](scripts/install-trivy.sh) for an example.
-Your script **MUST** follow the same naming convention, i.e.: `install-<software>.sh`.
+Your script **MUST** follow the same naming convention as this example, i.e.: `install-<software>.sh`.
 
 As with removing software, run the following command:
 
@@ -82,7 +83,7 @@ It is recommended to sync with upstream using the above command if you are out o
 
 ## Development
 
-We use trunk-based development, and two environments `prod` and `dev`.
+We use trunk-based development and two environments `prod` and `dev`.
 Any pull request to the `trunk` branch will generate and push an image to the `dev` environment.
 After merging to the `trunk` branch, the image will be pushed to the `prod` environment.
 Any new runners created by [Actions Orchestrator](https://github.com/3lvia/core/tree/trunk/src/actions-orchestrator) in `dev` will use the `dev` image, and the same for `prod`.
