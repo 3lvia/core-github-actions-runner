@@ -282,7 +282,6 @@ build {
       "${path.root}/../scripts/build/install-azure-devops-cli.sh",
       "${path.root}/../scripts/build/install-bicep.sh",
       "${path.root}/../scripts/build/install-clang.sh",
-      "${path.root}/../scripts/build/install-swift.sh",
       "${path.root}/../scripts/build/install-cmake.sh",
       "${path.root}/../scripts/build/install-codeql-bundle.sh",
       "${path.root}/../scripts/build/install-container-tools.sh",
@@ -315,10 +314,10 @@ build {
       "${path.root}/../scripts/build/install-pypy.sh",
       "${path.root}/../scripts/build/install-python.sh",
       "${path.root}/../scripts/build/install-zstd.sh",
-      "${path.root}/../scripts/build/install-golangci-lint.sh",
-      "${path.root}/../scripts/build/install-playwright-dependencies.sh",
-      "${path.root}/../scripts/build/install-github-runner.sh",
       "${path.root}/../scripts/build/install-trivy.sh",
+      "${path.root}/../scripts/build/install-playwright-dependencies.sh",
+      "${path.root}/../scripts/build/install-golangci-lint.sh",
+      "${path.root}/../scripts/build/install-github-runner.sh",
     ]
   }
 
