@@ -11,32 +11,33 @@ import (
 )
 
 var removeSoftwareList = []string{
+	"aliyun-cli",
+	"android-sdk",
 	"apache",
 	"aws-tools",
+	"bazel",
 	"gfortran",
+	"heroku",
+	"julia",
+	"kotlin",
+	"leiningen",
+	"oc-cli",
 	"php",
 	"postgresql",
 	"pulumi",
-	"bazel",
-	"rust",
-	"julia",
-	"selenium",
-	"vcpkg",
-	"android-sdk",
-	"leiningen",
-	"kotlin",
-	"sbt",
-	"oc-cli",
-	"aliyun-cli",
 	"rlang",
-	"heroku",
+	"rust",
+	"sbt",
+	"selenium",
+	"swift",
+	"vcpkg",
 }
 
 var addSoftwareList = []string{
-	"trivy",
 	"github-runner",
-	"playwright-dependencies",
 	"golangci-lint",
+	"playwright-dependencies",
+	"trivy",
 }
 
 func checkDiff(filesPath string, localGitDir string, gitDir string) {
