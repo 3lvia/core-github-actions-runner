@@ -75,7 +75,7 @@ jobs:
             --yes || true
 
       - name: Send Slack notification on failure
-        if: ${{ failure() && github.event_name == 'push' }}
+        if: ${{ failure() && github.event_name != 'pull_request' }}
         uses: 3lvia/core-github-actions-templates/slack-message@trunk
         with:
           slack-channel: '#team-core-alerts'
