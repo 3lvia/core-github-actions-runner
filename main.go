@@ -36,6 +36,7 @@ var removeSoftwareList = []string{
 var addSoftwareList = []string{
 	"github-runner",
 	"golangci-lint",
+	"google-cloud-cli",
 	"playwright-dependencies",
 	"trivy",
 	"kubelogin",
