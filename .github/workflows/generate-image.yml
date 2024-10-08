@@ -64,7 +64,13 @@ jobs:
         if: ${{ failure() || cancelled() }}
         uses: azure/login@v2
         with:
-          creds: '{"clientId":"${{ vars.ARM_CLIENT_ID }}","clientSecret":"${{ secrets.ARM_CLIENT_SECRET }}","subscriptionId":"${{ vars.ARM_SUBSCRIPTION_ID }}","tenantId":"${{ vars.ARM_TENANT_ID }}"}'
+          creds: |
+            {
+              "clientId": "${{ vars.ARM_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.ARM_CLIENT_SECRET }}",
+              "subscriptionId": "${{ vars.ARM_SUBSCRIPTION_ID }}",
+              "tenantId":"${{ vars.ARM_TENANT_ID }}"
+            }
 
       - name: Clean up resources created by Packer if build fails or is cancelled
         if: ${{ failure() || cancelled() }}
