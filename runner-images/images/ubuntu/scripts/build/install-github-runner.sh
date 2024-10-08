@@ -9,8 +9,8 @@
 #
 # TODO: use the helper functions from install.sh to download and install the GitHub Runner
 
-gh_runner_version='2.319.1' # NOTE: to upgrade, also update the checksum below. See https://github.com/actions/runner/releases.
-gh_runner_checksum='3f6efb7488a183e291fc2c62876e14c9ee732864173734facc85a1bfb1744464'
+gh_runner_version='2.320.0' # NOTE: to upgrade, also update the checksum below. See https://github.com/actions/runner/releases.
+gh_runner_checksum='93ac1b7ce743ee85b5d386f5c1787385ef07b3d7c728ff66ce0d3813d5f46900'
 gh_runner_tarball="actions-runner-linux-x64-$gh_runner_version.tar.gz"
 
 echo 'Creating directory and downloading GitHub Runner...'
