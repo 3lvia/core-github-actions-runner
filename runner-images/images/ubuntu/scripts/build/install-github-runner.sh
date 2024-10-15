@@ -4,21 +4,16 @@
 ##  Desc:  Install GitHub Runner
 ################################################################################
 
-# Source the helpers for use with the script
-# source $HELPER_SCRIPTS/install.sh
-#
-# TODO: use the helper functions from install.sh to download and install the GitHub Runner
+echo 'Creating directory and downloading latest GitHub Runner...'
+gh_actions_dir="/opt/actions-runner"
+mkdir -p "$gh_actions_dir" && cd "$gh_actions_dir"
 
-gh_runner_version='2.320.0' # NOTE: to upgrade, also update the checksum below. See https://github.com/actions/runner/releases.
-gh_runner_checksum='93ac1b7ce743ee85b5d386f5c1787385ef07b3d7c728ff66ce0d3813d5f46900'
-gh_runner_tarball="actions-runner-linux-x64-$gh_runner_version.tar.gz"
+gh_runner_latest_version=$(curl -sL https://api.github.com/repos/actions/runner/releases/latest | jq -r .tag_name)
+gh_runner_download_url=$(curl -sL "https://api.github.com/repos/actions/runner/releases/tags/$gh_runner_latest_version" | jq -r '.assets[] | select(.name | contains("linux-x64")) | .browser_download_url')
+gh_runner_tarball=$(basename "$gh_runner_download_url")
+gh_runner_checksum=$(curl -sL "https://api.github.com/repos/actions/runner/releases/tags/$gh_runner_latest_version" | jq -r .body | grep -oP '(?<=<!-- BEGIN SHA linux-x64 -->).*?(?=<!-- END SHA linux-x64 -->)')
 
-echo 'Creating directory and downloading GitHub Runner...'
-actions_dir='/opt/actions-runner'
-mkdir -p "$actions_dir" && cd "$actions_dir"
-
-curl -o "$gh_runner_tarball" \
-    -L "https://github.com/actions/runner/releases/download/v$gh_runner_version/$gh_runner_tarball"
+curl -o "$gh_runner_tarball" -L "$gh_runner_download_url"
 printf "Done.\n\n"
 
 echo 'Verify GitHub Runner checksum...'
